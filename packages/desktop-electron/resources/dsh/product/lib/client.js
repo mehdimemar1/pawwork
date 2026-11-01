@@ -52,7 +52,7 @@ div:has(> button [data-slot="sidebar.brand.mark"]):not(:has([data-slot="sidebar.
    but presents the native controls and one overlay toggle instead, so the empty row owns only the
    cross-platform titlebar safe band. DSH's following 8px component spacing remains authoritative. */
 div:has(> button [data-slot="sidebar.brand.name"]) {
-  height: max(var(--pawwork-titlebar-height), 32px);
+  height: calc(max(var(--pawwork-titlebar-height), 32px) + 2px);
   padding-bottom: 0;
   padding-top: 0;
 }
