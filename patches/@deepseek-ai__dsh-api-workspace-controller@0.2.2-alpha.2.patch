@@ -1,12 +1,12 @@
 diff --git a/lib/index.js b/lib/index.js
-index 0a00000000000000000000000000000000000000..0b00000000000000000000000000000000000000 100644
+index 743644a7a69f7071fda73a036061eec7a6660ef1..0000000000000000000000000000000000000000 100644
 --- a/lib/index.js
 +++ b/lib/index.js
 @@ -640,1 +640,1 @@
--    return paths.join(directory, "deepseek-harness", DEFAULT_WORKSPACE_DIRECTORY);
-+    return paths.join(directory, "PawWork", DEFAULT_WORKSPACE_DIRECTORY);
+-     return paths.join(directory, "deepseek-harness", DEFAULT_WORKSPACE_DIRECTORY);
++     return paths.join(directory, "PawWork", DEFAULT_WORKSPACE_DIRECTORY);
 diff --git a/lib/types/default-directory.js b/lib/types/default-directory.js
-index 1a00000000000000000000000000000000000000..1b00000000000000000000000000000000000000 100644
+index 6df7843e5177464a2b690b95ac02ee03207b4fd6..0000000000000000000000000000000000000000 100644
 --- a/lib/types/default-directory.js
 +++ b/lib/types/default-directory.js
 @@ -63,1 +63,1 @@
