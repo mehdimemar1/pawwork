@@ -142,9 +142,9 @@ describe("PawWork home", () => {
     // Overlay symlinks point at the install directory; following them would
     // copy the installed product into the user's home.
     expect(lstatSync(join(homes.home, "installed")).isSymbolicLink()).toBe(true)
-    expect(readlinkSync(join(homes.home, "installed"))).toBe(
-      "/Applications/PawWork.app/Contents/Resources/dsh",
-    )
+    expect(
+      readlinkSync(join(homes.home, "installed")).replaceAll("\\", "/").replace(/^[A-Za-z]:/, ""),
+    ).toBe("/Applications/PawWork.app/Contents/Resources/dsh")
     expect(existsSync(markerPath(homes))).toBe(true)
   })
 
