@@ -14,11 +14,11 @@ import { RELEASE_TARGETS } from "./release-targets.ts"
 
 describe("buildManifest", () => {
   test("locks the manifest shape and per-platform installer URLs", () => {
-    expect(buildManifest("2026.5.29", "https://dl.pawwork.ai")).toEqual({
+    expect(buildManifest("2026.5.29", "https://downloads.fork.example.invalid")).toEqual({
       version: "2026.5.29",
-      macArm64: "https://dl.pawwork.ai/pawwork-mac-arm64-2026.5.29.dmg",
-      macX64: "https://dl.pawwork.ai/pawwork-mac-x64-2026.5.29.dmg",
-      winX64: "https://dl.pawwork.ai/pawwork-win-x64-2026.5.29.exe",
+      macArm64: "https://downloads.fork.example.invalid/pawwork-mac-arm64-2026.5.29.dmg",
+      macX64: "https://downloads.fork.example.invalid/pawwork-mac-x64-2026.5.29.dmg",
+      winX64: "https://downloads.fork.example.invalid/pawwork-win-x64-2026.5.29.exe",
     })
   })
 
@@ -28,15 +28,15 @@ describe("buildManifest", () => {
   test("offers exactly the keys the download buttons look up", () => {
     const home = readFileSync(join(import.meta.dirname, "..", "..", "..", "site", "src", "components", "Home.astro"), "utf8")
     const buttons = new Set([...home.matchAll(/data-dl="(\w+)"/g)].map((match) => match[1]))
-    const manifest = buildManifest("2026.5.29", "https://dl.pawwork.ai")
+    const manifest = buildManifest("2026.5.29", "https://downloads.fork.example.invalid")
 
     expect(buttons).toEqual(new Set(RELEASE_TARGETS.map((target) => target.manifestKey)))
     for (const key of buttons) expect(Object.keys(manifest)).toContain(key)
   })
 
   test("normalizes a trailing slash in the public base", () => {
-    expect(buildManifest("2026.5.29", "https://dl.pawwork.ai/").macArm64).toBe(
-      "https://dl.pawwork.ai/pawwork-mac-arm64-2026.5.29.dmg",
+    expect(buildManifest("2026.5.29", "https://downloads.fork.example.invalid/").macArm64).toBe(
+      "https://downloads.fork.example.invalid/pawwork-mac-arm64-2026.5.29.dmg",
     )
   })
 })
@@ -56,7 +56,7 @@ describe("uploadPlan", () => {
       names.indexOf("pawwork-win-x64-2026.5.29.exe"),
       names.indexOf("pawwork-mac-arm64-2026.5.29.zip.blockmap"),
     )
-    const firstPointer = Math.min(names.indexOf("latest-v2.yml"), names.indexOf("latest-v2-mac.yml"))
+    const firstPointer = Math.min(names.indexOf("latest-fork.yml"), names.indexOf("latest-fork-mac.yml"))
     expect(lastVersioned).toBeLessThan(firstPointer)
     expect(firstPointer).toBeLessThan(names.indexOf("latest.json"))
   })
@@ -64,8 +64,8 @@ describe("uploadPlan", () => {
   test("marks versioned artifacts immutable and pointers no-cache", () => {
     const cacheOf = (name: string) => plan.find((step) => step.name === name)?.cacheControl
     expect(cacheOf("pawwork-mac-arm64-2026.5.29.dmg")).toBe("public, max-age=31536000, immutable")
-    expect(cacheOf("latest-v2.yml")).toBe("no-cache, must-revalidate")
-    expect(cacheOf("latest-v2-mac.yml")).toBe("no-cache, must-revalidate")
+    expect(cacheOf("latest-fork.yml")).toBe("no-cache, must-revalidate")
+    expect(cacheOf("latest-fork-mac.yml")).toBe("no-cache, must-revalidate")
   })
 
   test("uploads every released asset exactly once plus the manifest", () => {
