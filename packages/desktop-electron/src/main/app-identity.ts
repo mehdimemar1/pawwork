@@ -1,10 +1,20 @@
 export const PAWWORK_APP = {
-  dev: { id: "ai.pawwork.desktop.dev", name: "PawWork Dev", releaseRepo: undefined },
-  prod: { id: "ai.pawwork.desktop", name: "PawWork", releaseRepo: "pawwork" },
+  dev: {
+    id: "ai.pawwork.desktop.dev",
+    name: "PawWork Dev",
+    protocolScheme: "pawwork-dev",
+    releaseRepo: undefined,
+  },
+  prod: {
+    id: "ai.pawwork.desktop.fork",
+    name: "PawWork Fork",
+    protocolScheme: "pawwork-fork",
+    releaseRepo: "pawwork",
+  },
 } as const
 
-export const PAWWORK_RELEASE_OWNER = "Astro-Han"
-export const PAWWORK_UPDATE_CHANNEL = "latest-v2"
+export const PAWWORK_RELEASE_OWNER = "mehdimemar1"
+export const PAWWORK_UPDATE_CHANNEL = "latest-fork"
 
 export type PawWorkChannel = keyof typeof PAWWORK_APP
 
@@ -16,7 +26,7 @@ export type PawWorkChannel = keyof typeof PAWWORK_APP
 // the stem. Left to its default the name "@pawwork/desktop" becomes
 // "@pawworkdesktop-updater", and the app would clear a pending-update directory
 // the updater never writes to.
-export const PAWWORK_PACKAGE_NAME = "pawwork"
+export const PAWWORK_PACKAGE_NAME = "pawwork-fork"
 export const UPDATER_CACHE_DIR_NAME = `${PAWWORK_PACKAGE_NAME}-updater`
 
 // The set of channels is PAWWORK_APP's keys, so membership is asked here rather
