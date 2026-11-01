@@ -80,15 +80,15 @@ describe("electron builder app-update config", () => {
   test("only the production build publishes to the PawWork repository", () => {
     expect(getPublishConfig("dev")).toBeUndefined()
     const prod = getPublishConfig("prod")
-    expect(prod).toMatchObject({ provider: "github", owner: "Astro-Han", repo: "pawwork", channel: "latest-v2" })
+    expect(prod).toMatchObject({ provider: "github", owner: "mehdimemar1", repo: "pawwork", channel: "latest-fork" })
   })
 
   test("mac packaging enables a localized display name", () => {
     const config = createConfig("prod")
-    expect(config.productName).toBe("PawWork")
-    expect(config.appId).toBe("ai.pawwork.desktop")
+    expect(config.productName).toBe("PawWork Fork")
+    expect(config.appId).toBe("ai.pawwork.desktop.fork")
     expect(config.artifactName).toBe("pawwork-${os}-${arch}-${version}.${ext}")
-    expect(config.publish).toMatchObject({ owner: "Astro-Han", repo: "pawwork" })
+    expect(config.publish).toMatchObject({ owner: "mehdimemar1", repo: "pawwork", channel: "latest-fork" })
     expect(createConfig("prod").mac?.extendInfo).toMatchObject({
       LSHasLocalizedDisplayName: true,
     })
@@ -97,8 +97,8 @@ describe("electron builder app-update config", () => {
   // One scheme for every channel, named after the channel's app: whichever build
   // installs last owns pawwork:// links, and the OS prompt should say which one.
   test("every channel registers the pawwork scheme under its own name", () => {
-    expect(createConfig("dev").protocols).toEqual({ name: "PawWork Dev", schemes: ["pawwork"] })
-    expect(createConfig("prod").protocols).toEqual({ name: "PawWork", schemes: ["pawwork"] })
+    expect(createConfig("dev").protocols).toEqual({ name: "PawWork Dev", schemes: ["pawwork-dev"] })
+    expect(createConfig("prod").protocols).toEqual({ name: "PawWork Fork", schemes: ["pawwork-fork"] })
   })
 
   test("windows nsis installer uses PawWork shortcut customizations", () => {
@@ -121,10 +121,10 @@ describe("electron builder app-update config", () => {
 
   test("packaged repository metadata follows the release channel", () => {
     expect(createConfig("dev").extraMetadata).toMatchObject({
-      repository: { type: "git", url: "https://github.com/Astro-Han/pawwork" },
+      repository: { type: "git", url: "https://github.com/mehdimemar1/pawwork" },
     })
     expect(createConfig("prod").extraMetadata).toMatchObject({
-      repository: { type: "git", url: "https://github.com/Astro-Han/pawwork" },
+      repository: { type: "git", url: "https://github.com/mehdimemar1/pawwork" },
     })
   })
 
@@ -134,17 +134,17 @@ describe("electron builder app-update config", () => {
     roots.push(root)
     const config = createConfig("prod")
 
-    await afterPackHook(config)(macAfterPackContext(root, "PawWork"))
+    await afterPackHook(config)(macAfterPackContext(root, "PawWork Fork"))
 
-    const zhHans = join(root, "PawWork.app", "Contents", "Resources", "zh-Hans.lproj", "InfoPlist.strings")
-    const zhCn = join(root, "PawWork.app", "Contents", "Resources", "zh_CN.lproj", "InfoPlist.strings")
+    const zhHans = join(root, "PawWork Fork.app", "Contents", "Resources", "zh-Hans.lproj", "InfoPlist.strings")
+    const zhCn = join(root, "PawWork Fork.app", "Contents", "Resources", "zh_CN.lproj", "InfoPlist.strings")
 
     expect(existsSync(zhHans)).toBe(true)
     expect(existsSync(zhCn)).toBe(true)
-    expect(readFileSync(zhHans, "utf8")).toContain('CFBundleDisplayName = "爪印";')
-    expect(readFileSync(zhHans, "utf8")).toContain('CFBundleName = "爪印";')
-    expect(readFileSync(zhCn, "utf8")).toContain('CFBundleDisplayName = "爪印";')
-    expect(readFileSync(zhCn, "utf8")).toContain('CFBundleName = "爪印";')
+    expect(readFileSync(zhHans, "utf8")).toContain('CFBundleDisplayName = "爪印 Fork";')
+    expect(readFileSync(zhHans, "utf8")).toContain('CFBundleName = "爪印 Fork";')
+    expect(readFileSync(zhCn, "utf8")).toContain('CFBundleDisplayName = "爪印 Fork";')
+    expect(readFileSync(zhCn, "utf8")).toContain('CFBundleName = "爪印 Fork";')
   })
 
 
