@@ -138,10 +138,15 @@ let currentProgress: number | null = null
 const lifecycle = new DshLifecycle({ launch: launchDsh, onChange: handleLifecycleChange })
 
 function buildUpdateFeeds(): FeedTarget[] {
-  return [
-    r2Feed(DOWNLOAD_PUBLIC_BASE, UPDATE_CHANNEL, UPDATE_CHANNEL_FILE),
-    githubFeed(UPDATE_GITHUB_OWNER, UPDATE_GITHUB_REPO, UPDATE_CHANNEL, UPDATE_CHANNEL_FILE),
-  ]
+  const feeds: FeedTarget[] = []
+  if (DOWNLOAD_PUBLIC_BASE) {
+    feeds.push(r2Feed(DOWNLOAD_PUBLIC_BASE, UPDATE_CHANNEL, UPDATE_CHANNEL_FILE))
+  }
+  if (UPDATE_GITHUB_REPO) {
+    feeds.push(githubFeed(UPDATE_GITHUB_OWNER, UPDATE_GITHUB_REPO, UPDATE_CHANNEL, UPDATE_CHANNEL_FILE))
+  }
+  if (feeds.length === 0) throw new Error("No PawWork update feed is configured")
+  return feeds
 }
 
 const updateFeed = createUpdateFeed({
@@ -283,7 +288,7 @@ function setupApp() {
         return
       }
 
-      app.setAsDefaultProtocolClient("pawwork")
+      app.setAsDefaultProtocolClient(appIdentity.protocolScheme)
       setDockIcon()
       setupAutoUpdater()
 
