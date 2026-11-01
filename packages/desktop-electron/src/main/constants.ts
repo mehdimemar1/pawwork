@@ -5,9 +5,9 @@ export const CHANNEL = parsePawWorkChannel(import.meta.env.OPENCODE_CHANNEL)
 
 export const UPDATER_ACTIVE = app.isPackaged && CHANNEL === "prod"
 
-// V2 uses its own updater pointer so v1 users are never upgraded across the
-// migration boundary automatically. R2 is primary; GitHub is the fallback.
+// The fork uses a distinct metadata channel and its own GitHub Releases.
+// No upstream R2 endpoint is configured: the fork must never consume official assets.
 export const UPDATE_CHANNEL = PAWWORK_UPDATE_CHANNEL
 export const UPDATE_GITHUB_OWNER = PAWWORK_RELEASE_OWNER
 export const UPDATE_GITHUB_REPO = PAWWORK_APP.prod.releaseRepo
-export const DOWNLOAD_PUBLIC_BASE = "https://dl.pawwork.ai"
+export const DOWNLOAD_PUBLIC_BASE: string | undefined = undefined
