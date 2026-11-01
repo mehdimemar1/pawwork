@@ -884,7 +884,7 @@ jobs:
         working-directory: packages/desktop-electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
+          GH_REPO: ${{ env.PUBLISH_OWNER }}/${{ env.PUBLISH_REPO }}
           RELEASE_TAG: v${{ steps.package_version.outputs.version }}
           # The commit the assets were actually built from: finalize repackages
           # the submit build checked out at source_sha (see the finalize checkout
@@ -895,7 +895,6 @@ jobs:
           # Identify this target so it can upload its own provenance marker.
           RELEASE_OS: ${{ runner.os == 'macOS' && 'mac' || 'win' }}
           RELEASE_ARCH: ${{ matrix.arch_label }}
-          MIRROR_REF: main
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ runner.os == 'macOS' && (inputs.phase == 'finalize' || inputs.phase == 'full') && inputs.arch == matrix.arch_label }}
