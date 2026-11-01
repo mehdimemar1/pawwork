@@ -693,7 +693,7 @@ jobs:
             grep -qx "provider: github" "$config_path"
             grep -qx "owner: $PUBLISH_OWNER" "$config_path"
             grep -qx "repo: $PUBLISH_REPO" "$config_path"
-            grep -qx "channel: latest-v2" "$config_path"
+            grep -qx "channel: latest-fork" "$config_path"
           }
 
           verify_dir="$RUNNER_TEMP/verify-notarized-artifacts"
@@ -814,8 +814,8 @@ jobs:
           $updateConfig = Join-Path $installDir "resources/app-update.yml"
           if (-not (Test-Path $executable)) { throw "Installed executable not found: $executable" }
           if (-not (Test-Path $updateConfig)) { throw "Installed updater config not found: $updateConfig" }
-          if (-not (Select-String -Path $updateConfig -Pattern '^channel: latest-v2$' -Quiet)) {
-            throw "Installed updater config does not use latest-v2"
+          if (-not (Select-String -Path $updateConfig -Pattern '^channel: latest-fork$' -Quiet)) {
+            throw "Installed updater config does not use latest-fork"
           }
           "PAWWORK_INSTALLED_DIR=$installDir" >> $env:GITHUB_ENV
           "PAWWORK_INSTALLED_EXECUTABLE=$executable" >> $env:GITHUB_ENV
