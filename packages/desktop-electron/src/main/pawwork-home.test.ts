@@ -108,7 +108,7 @@ describe("PawWork home", () => {
     ])
   })
 
-  test("creates the dotdir private to the user", () => {
+  test.skipIf(process.platform === "win32")("creates the dotdir private to the user", () => {
     // ~/Library is 0700 and used to protect the sessions inside it. The home
     // directory is not, so the dotdir has to ask for it.
     const homes = seedHomes()
@@ -136,7 +136,9 @@ describe("PawWork home", () => {
     ])
     expect(readFileSync(join(homes.home, "import-v1", "ledger.json"), "utf8")).toBe('{"schema":1}')
     // The credential file is the one thing in here that must not widen.
-    expect(statSync(join(homes.home, ".credentials.yaml")).mode & 0o777).toBe(0o600)
+    if (process.platform !== "win32") {
+      expect(statSync(join(homes.home, ".credentials.yaml")).mode & 0o777).toBe(0o600)
+    }
     // Overlay symlinks point at the install directory; following them would
     // copy the installed product into the user's home.
     expect(lstatSync(join(homes.home, "installed")).isSymbolicLink()).toBe(true)
@@ -146,7 +148,7 @@ describe("PawWork home", () => {
     expect(existsSync(markerPath(homes))).toBe(true)
   })
 
-  test("keeps the migrated home when the legacy home cannot be deleted afterwards", () => {
+  test.skipIf(process.platform === "win32")("keeps the migrated home when the legacy home cannot be deleted afterwards", () => {
     if (process.getuid?.() === 0) return // root deletes regardless of the mode below
     const homes = seedHomes()
     const { events, onEvent } = collectEvents()
