@@ -340,7 +340,11 @@ async function gh(args: string[]) {
   if (code !== 0) throw new Error(`gh ${args.join(" ")} exited ${code}`)
 }
 
-async function dispatchMirror(repo: string, tag: string, ref: string) {
+async function dispatchMirror(repo: string, tag: string, ref: string | undefined) {
+  if (!ref) {
+    console.log("No external release mirror configured; skipping mirror dispatch")
+    return
+  }
   await gh(["workflow", "run", "mirror-release-to-r2.yml", "--repo", repo, "--ref", ref, "-f", `tag=${tag}`])
 }
 
@@ -378,7 +382,7 @@ async function main() {
   const buildSha = requireEnv("BUILD_SHA")
   const os = requireEnv("RELEASE_OS")
   const arch = requireEnv("RELEASE_ARCH")
-  const mirrorRef = requireEnv("MIRROR_REF")
+  const mirrorRef = process.env.MIRROR_REF?.trim() || undefined
 
   const version = tag.replace(/^v/, "")
   const expectedProvenance = releaseProvenanceAssetNames(version)
