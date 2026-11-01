@@ -59,7 +59,7 @@ div:has(> button [data-slot="sidebar.brand.name"]) {
 /* This height puts New session on the same center as its expanded control; the smoke measures
    both states. */
 [data-sidebar-collapsed] div:has(> button [data-slot="sidebar.brand.mark"]):not(:has([data-slot="sidebar.brand.name"])) {
-  height: 9px;
+  height: 11px;
 }
 /* The layout already animates its sidebar grid track. Move the surface through the same state
    change: a collapsed rail belongs to the content canvas, while the expanded sidebar keeps DSH's
