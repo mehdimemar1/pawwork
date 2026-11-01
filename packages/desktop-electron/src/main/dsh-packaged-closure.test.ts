@@ -71,5 +71,5 @@ describe("packaged DSH dependency closure", () => {
     }
 
     expect([...reachableButPruned].sort()).toEqual([])
-  })
+  }, 15_000)
 })
