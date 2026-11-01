@@ -9,7 +9,7 @@ const workflows = join(import.meta.dirname, "..", "..", "..", ".github", "workfl
 describe("packaged app locations", () => {
   test("names the bundle and its executable per channel and platform", () => {
     expect(packagedAppEnv("prod", "darwin", "arm64")).toEqual({
-      APP_NAME: "PawWork",
+      APP_NAME: "PawWork Fork",
       APP_OUT_DIR: "dist/mac-arm64",
       APP_PATH: "dist/mac-arm64/PawWork.app",
       EXECUTABLE_PATH: "dist/mac-arm64/PawWork.app/Contents/MacOS/PawWork",
@@ -22,7 +22,7 @@ describe("packaged app locations", () => {
     })
     // Windows has no per-arch directory and the executable is the app itself.
     expect(packagedAppEnv("prod", "win32", "x64")).toEqual({
-      APP_NAME: "PawWork",
+      APP_NAME: "PawWork Fork",
       APP_OUT_DIR: "dist/win-unpacked",
       APP_PATH: "dist/win-unpacked/PawWork.exe",
       EXECUTABLE_PATH: "dist/win-unpacked/PawWork.exe",
