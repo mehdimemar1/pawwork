@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 import { spawnSync } from "node:child_process"
 import { readFileSync } from "node:fs"
+import { load } from "js-yaml"
 import { join } from "node:path"
 
 // A unit test cannot prove what a shell workflow does — only that a step whose
@@ -9,6 +10,9 @@ import { join } from "node:path"
 // reformat inside a step does not fail them and a deleted step does.
 const workflow = readFileSync(join(import.meta.dirname, "..", "..", "..", ".github", "workflows", "build.yml"), "utf8")
 const publisher = readFileSync(join(import.meta.dirname, "publish-when-complete.ts"), "utf8")
+const workflowDocument = load(workflow) as {
+  jobs: Record<string, { steps?: Array<{ name?: string; run?: string }> }>
+}
 
 const steps = workflow
   .split(/\n {6}- name: /)
@@ -30,10 +34,10 @@ function conditionOfStep(name: string) {
 }
 
 function runSourceValidation(phase: string, githubRef: string, sourceRef = "") {
-  const match = workflow.match(
-    /- name: Validate release source branch\n\s+run: \|\n(?<script>(?: {10}.*\n|\n)+?)\s+env:/,
+  const validation = workflowDocument.jobs["select-build-target"]?.steps?.find(
+    (step) => step.name === "Validate release source branch",
   )
-  if (!match?.groups?.script) throw new Error("release source validation step is missing")
+  if (!validation?.run) throw new Error("release source validation step is missing")
 
   return spawnSync("bash", ["-c", match.groups.script.replace(/^ {10}/gm, "")], {
     encoding: "utf8",
@@ -58,9 +62,10 @@ describe("release workflow", () => {
     expect(runSourceValidation("finalize", "refs/tags/workflow-snapshot-1", "dev").status).toBe(1)
   })
 
-  test("requires the workflow to name the mirror branch explicitly", () => {
-    expect(publisher).toContain('const mirrorRef = requireEnv("MIRROR_REF")')
-    expect(publisher).not.toMatch(/MIRROR_REF.*\?\?/)
+  test("does not configure an upstream R2 mirror for fork releases", () => {
+    expect(publisher).toContain("const mirrorRef = process.env.MIRROR_REF?.trim() || undefined")
+    expect(publisher).toContain("if (!ref)")
+    expect(workflow).not.toMatch(/MIRROR_REF:/)
   })
 
   // electron-builder creates the release when the tag has none and uploads a
@@ -122,7 +127,7 @@ describe("release workflow", () => {
     expect(verify.body).toMatch(/verify_app_update_config "\$verify_dir\//)
     expect(verify.body).toMatch(/verify_app_update_config "\$mounted_app\//)
     expect(verify.body).toMatch(/grep -qx "repo: \$PUBLISH_REPO"/)
-    expect(verify.body).toMatch(/grep -qx "channel: latest-v2"/)
+    expect(verify.body).toMatch(/grep -qx "channel: latest-fork"/)
   })
 
   test("installs and smokes a production Windows installer before upload without signing infrastructure", () => {
