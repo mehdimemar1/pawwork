@@ -12,7 +12,7 @@ describe("packaged app locations", () => {
       APP_NAME: "PawWork Fork",
       APP_OUT_DIR: "dist/mac-arm64",
       APP_PATH: "dist/mac-arm64/PawWork Fork.app",
-      EXECUTABLE_PATH: "dist/mac-arm64/PawWork Fork.app/Contents/MacOS/PawWork",
+      EXECUTABLE_PATH: "dist/mac-arm64/PawWork Fork.app/Contents/MacOS/PawWork Fork",
     })
     expect(packagedAppEnv("dev", "darwin", "x64")).toEqual({
       APP_NAME: "PawWork Dev",
