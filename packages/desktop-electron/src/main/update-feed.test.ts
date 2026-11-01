@@ -223,7 +223,7 @@ describe("feed config builders", () => {
     expect(githubFeed("Astro-Han", "pawwork", "latest-v2", "latest-v2.yml")).toEqual({
       label: "github",
       options: { provider: "github", owner: "Astro-Han", repo: "pawwork", channel: "latest-v2" },
-      probeUrl: "https://github.com/Astro-Han/pawwork/releases/latest/download/latest-v2.yml",
+      probeUrl: "https://github.com/mehdimemar1/pawwork/releases/latest/download/latest-fork.yml",
     })
   })
 })
