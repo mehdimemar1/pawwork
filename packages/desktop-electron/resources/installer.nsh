@@ -19,6 +19,9 @@ LangString PawWorkShortcutOptions 2052 "快捷方式选项"
   ${ElseIf} $LANGUAGE == 2052
   ${AndIf} "${SHORTCUT_NAME}" == "PawWork Dev"
     StrCpy $PawWorkStandardShortcutName "爪印 Dev"
+  ${ElseIf} $LANGUAGE == 2052
+  ${AndIf} "${SHORTCUT_NAME}" == "PawWork Fork"
+    StrCpy $PawWorkStandardShortcutName "爪印 Fork"
   ${EndIf}
 !macroend
 
@@ -32,6 +35,9 @@ LangString PawWorkShortcutOptions 2052 "快捷方式选项"
   ${ElseIf} "${SHORTCUT_NAME}" == "PawWork Dev"
     Delete "$DESKTOP\PawWork Dev.lnk"
     Delete "$DESKTOP\爪印 Dev.lnk"
+  ${ElseIf} "${SHORTCUT_NAME}" == "PawWork Fork"
+    Delete "$DESKTOP\PawWork Fork.lnk"
+    Delete "$DESKTOP\爪印 Fork.lnk"
   ${EndIf}
 !macroend
 
@@ -45,6 +51,8 @@ LangString PawWorkShortcutOptions 2052 "快捷方式选项"
       ${StdUtils.ExecShellWaitEx} $0 $1 "$SYSDIR\cmd.exe" "runas" '/C del /F /Q "$DESKTOP\PawWork.lnk" "$DESKTOP\爪印.lnk"'
     ${ElseIf} "${SHORTCUT_NAME}" == "PawWork Dev"
       ${StdUtils.ExecShellWaitEx} $0 $1 "$SYSDIR\cmd.exe" "runas" '/C del /F /Q "$DESKTOP\PawWork Dev.lnk" "$DESKTOP\爪印 Dev.lnk"'
+    ${ElseIf} "${SHORTCUT_NAME}" == "PawWork Fork"
+      ${StdUtils.ExecShellWaitEx} $0 $1 "$SYSDIR\cmd.exe" "runas" '/C del /F /Q "$DESKTOP\PawWork Fork.lnk" "$DESKTOP\爪印 Fork.lnk"'
     ${EndIf}
   ${EndIf}
 !macroend
