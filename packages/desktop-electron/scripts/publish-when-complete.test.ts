@@ -21,14 +21,14 @@ const completeRelease: GithubRelease = {
     "pawwork-mac-x64-2026.6.1.zip.blockmap",
     "pawwork-win-x64-2026.6.1.exe",
     "pawwork-win-x64-2026.6.1.exe.blockmap",
-    "latest-v2.yml",
-    "latest-v2-mac.yml",
+    "latest-fork.yml",
+    "latest-fork-mac.yml",
   ].map((name) => ({ name, url: `https://api.example.com/assets/${name}`, browser_download_url: `https://example.com/${name}` })),
 }
 
 const metadata = {
-  "latest-v2.yml": "version: 2026.6.1\nfiles:\n  - url: pawwork-win-x64-2026.6.1.exe\n",
-  "latest-v2-mac.yml":
+  "latest-fork.yml": "version: 2026.6.1\nfiles:\n  - url: pawwork-win-x64-2026.6.1.exe\n",
+  "latest-fork-mac.yml":
     "version: 2026.6.1\nfiles:\n  - url: pawwork-mac-arm64-2026.6.1.zip\n  - url: pawwork-mac-x64-2026.6.1.zip\n",
 }
 
@@ -79,7 +79,7 @@ describe("decidePublishAction", () => {
   })
 
   test("waits when the updater metadata asset is not uploaded yet", () => {
-    expect(decide({ metadata: { ...metadata, "latest-v2.yml": undefined } }).kind).toBe("wait")
+    expect(decide({ metadata: { ...metadata, "latest-fork.yml": undefined } }).kind).toBe("wait")
   })
 
   test("waits when a target has not uploaded its provenance marker yet", () => {
@@ -166,13 +166,13 @@ describe("decidePublishAction", () => {
         : page2
 
     test("finds a release that only appears on a later page", async () => {
-      const release = await findRelease("Astro-Han/pawwork", "v2026.6.1", paged([apiRelease(7, "v2026.6.1")]))
+      const release = await findRelease("mehdimemar1/pawwork", "v2026.6.1", paged([apiRelease(7, "v2026.6.1")]))
       expect(release.id).toBe(7)
     })
 
     test("refuses a tag split across duplicate releases", async () => {
       await expect(
-        findRelease("Astro-Han/pawwork", "v2026.6.1", paged([apiRelease(7, "v2026.6.1"), apiRelease(8, "v2026.6.1")])),
+        findRelease("mehdimemar1/pawwork", "v2026.6.1", paged([apiRelease(7, "v2026.6.1"), apiRelease(8, "v2026.6.1")])),
       ).rejects.toThrow(/duplicate drafts for tag v2026\.6\.1/)
     })
   })
