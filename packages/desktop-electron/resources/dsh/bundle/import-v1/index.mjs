@@ -100,11 +100,14 @@ export function createDshSessionImporter(ctx, onPersisted = () => {}) {
         await handle.append(session.snapshotEvents().slice(storedCount));
         const detach = ctx.sessions.enter(session);
         try {
+          // DSH keeps an entered session read-only until its creation
+          // announcement finishes. Rename and flush append session events,
+          // so the announcement must be the first operation after enter.
+          ctx.sessions.announce(session);
           ctx.sessionTitle.rename(session, imported.title);
           await ctx.sessions.flush(session);
           // Imported sessions are cold after this lifecycle; the status RPC
           // below still supplies the later authoritative sidebar refresh.
-          ctx.sessions.announce(session);
         } finally {
           detach();
         }
