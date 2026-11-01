@@ -140,7 +140,7 @@ describe("release workflow", () => {
     expect(install).toBeGreaterThan(pack)
     expect(smoke).toBeGreaterThan(install)
     expect(upload).toBeGreaterThan(smoke)
-    expect(steps[install].body).toMatch(/latest-v2/)
+    expect(steps[install].body).toMatch(/latest-fork/)
     expect(steps[smoke].body).toMatch(/ci-smoke\.ts packaged prod/)
     expect(workflow).not.toMatch(/azure\/login|AZURE_|Get-AuthenticodeSignature|signtoolOptions/)
   })
