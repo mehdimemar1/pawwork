@@ -217,7 +217,7 @@ test('retires each persisted v1 session through the paired live lifecycle', asyn
     assert.equal(missingContinueSessionRejected, true);
     assert.equal(incompleteContinueSessionRejected, true);
     assert.equal(defaultModelSupplied, true);
-    assert.deepEqual(sessionLifecycle, ['enter', 'rename', 'flush', 'announce', 'detach', 'attach-workspace']);
+    assert.deepEqual(sessionLifecycle, ['enter', 'announce', 'rename', 'flush', 'detach', 'attach-workspace']);
     assert.equal(storedSessionRecords.length, 1);
     assert.equal(storedSessionRecords[0].header.id, 'pawwork-v1-session');
     assert.equal(storedSessionRecords[0].closed, true);
@@ -1315,7 +1315,7 @@ test('completes an interrupted import by appending only the missing tail', async
 
   assert.deepEqual(created, []);
   assert.deepEqual(stored.events, seed);
-  assert.deepEqual(lifecycle, ['enter', 'rename', 'flush', 'announce', 'detach']);
+  assert.deepEqual(lifecycle, ['enter', 'announce', 'rename', 'flush', 'detach']);
 });
 
 test('attaches an imported session through the official DSH workspace registry', async () => {
