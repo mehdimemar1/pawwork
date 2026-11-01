@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest"
 import { createUpdateFeed, githubFeed, r2Feed, type FeedTarget } from "./update-feed"
 
-const R2 = r2Feed("https://dl.pawwork.ai", "latest", "latest-v2-mac.yml")
-const GITHUB = githubFeed("Astro-Han", "pawwork", "latest", "latest-v2-mac.yml")
+const R2 = r2Feed("https://downloads.example.invalid", "latest-fork", "latest-fork-mac.yml")
+const GITHUB = githubFeed("mehdimemar1", "pawwork", "latest-fork", "latest-fork-mac.yml")
 
 const available = (version: string) => ({
   isUpdateAvailable: true,
@@ -46,7 +46,7 @@ describe("update feed selection", () => {
   test("selects R2 when its probe succeeds and runs exactly one check", async () => {
     const setup = feed()
     await expect(setup.feed.check()).resolves.toEqual(available("0.2.5"))
-    expect(setup.calls.probe).toEqual(["https://dl.pawwork.ai/latest-v2-mac.yml"])
+    expect(setup.calls.probe).toEqual(["https://downloads.example.invalid/latest-fork-mac.yml"])
     expect(setup.calls.setFeedURL).toEqual(["r2"])
     expect(setup.calls.check).toBe(1)
   })
@@ -212,17 +212,17 @@ describe("update feed download", () => {
 
 describe("feed config builders", () => {
   test("r2Feed strips a trailing slash and builds the generic feed + probe URL", () => {
-    expect(r2Feed("https://dl.pawwork.ai/", "latest-v2", "latest-v2-mac.yml")).toEqual({
+    expect(r2Feed("https://downloads.example.invalid/", "latest-fork", "latest-fork-mac.yml")).toEqual({
       label: "r2",
-      options: { provider: "generic", url: "https://dl.pawwork.ai", channel: "latest-v2" },
-      probeUrl: "https://dl.pawwork.ai/latest-v2-mac.yml",
+      options: { provider: "generic", url: "https://downloads.example.invalid", channel: "latest-fork" },
+      probeUrl: "https://downloads.example.invalid/latest-fork-mac.yml",
     })
   })
 
   test("githubFeed targets owner/repo and the releases/latest probe URL", () => {
-    expect(githubFeed("Astro-Han", "pawwork", "latest-v2", "latest-v2.yml")).toEqual({
+    expect(githubFeed("mehdimemar1", "pawwork", "latest-fork", "latest-fork.yml")).toEqual({
       label: "github",
-      options: { provider: "github", owner: "Astro-Han", repo: "pawwork", channel: "latest-v2" },
+      options: { provider: "github", owner: "mehdimemar1", repo: "pawwork", channel: "latest-fork" },
       probeUrl: "https://github.com/mehdimemar1/pawwork/releases/latest/download/latest-fork.yml",
     })
   })
