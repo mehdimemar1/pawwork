@@ -264,10 +264,10 @@ describe("DSH product home", () => {
   // hide everything this package declared for its own plugins.
   test("resolves the app's own module tree, packaged and not", () => {
     expect(resolveHostModules({ appPath: "/repo/app", isPackaged: false, resourcesPath: "/r" })).toBe(
-      "/repo/app/node_modules",
+      join("/repo/app", "node_modules"),
     )
     expect(resolveHostModules({ appPath: "/ignored", isPackaged: true, resourcesPath: "/r" })).toBe(
-      "/r/app/node_modules",
+      join("/r", "app", "node_modules"),
     )
   })
 
@@ -284,9 +284,18 @@ describe("DSH product home", () => {
     // both sides realpath through pnpm's store, and what has to hold is that the
     // plugin binds the very package the app loaded, not a second copy.
     const plugin = join(productHome, "node_modules/@pawwork/dsh-web-search/lib/index.js")
-    expect(createRequire(plugin).resolve("@deepseek-ai/dsh-web/package.json")).toBe(
-      createRequire(join(hostModules, "index.js")).resolve("@deepseek-ai/dsh-web/package.json"),
-    )
+    const pluginRequire = createRequire(plugin)
+    const hostRequire = createRequire(join(hostModules, "index.js"))
+
+    for (const name of [
+      "@deepseek-ai/dsh-web",
+      "@deepseek-ai/dsh-typert-protocol",
+      "@deepseek-ai/schemastery",
+      "@deepseek-ai/dsh-mcp-client",
+      "@deepseek-ai/dsh-app-boot",
+    ]) {
+      expect(pluginRequire.resolve(name)).toBe(hostRequire.resolve(name))
+    }
   })
 
   test("repoints the harness link when the host tree moves", () => {
@@ -299,7 +308,10 @@ describe("DSH product home", () => {
 
     prepareDshProductHome({ productHome, resources, hostModules })
 
-    expect(readlinkSync(join(productHome, "node_modules/@deepseek-ai"))).toBe(join(hostModules, "@deepseek-ai"))
+    const packageLink = join(productHome, "node_modules/@deepseek-ai/dsh-web")
+    expect(join(readlinkSync(packageLink), "package.json")).toBe(
+      createRequire(join(hostModules, "index.js")).resolve("@deepseek-ai/dsh-web/package.json"),
+    )
   })
 
   // The ordinary shape of a moved host tree: run once from Downloads, drag the
@@ -318,7 +330,10 @@ describe("DSH product home", () => {
 
     prepareDshProductHome({ productHome, resources, hostModules })
 
-    expect(readlinkSync(join(productHome, "node_modules/@deepseek-ai"))).toBe(join(hostModules, "@deepseek-ai"))
+    const packageLink = join(productHome, "node_modules/@deepseek-ai/dsh-web")
+    expect(join(readlinkSync(packageLink), "package.json")).toBe(
+      createRequire(join(hostModules, "index.js")).resolve("@deepseek-ai/dsh-web/package.json"),
+    )
   })
 
   // Without the scope link every bundled plugin fails to resolve its harness

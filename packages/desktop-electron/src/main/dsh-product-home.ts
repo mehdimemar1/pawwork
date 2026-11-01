@@ -1,10 +1,5 @@
-import {
-  PROFILES_DIR,
-  PROFILE_TEMPLATES,
-  initProfile,
-  readProfileManifest,
-  writeProfileBundles,
-} from "@deepseek-ai/dsh-app-boot"
+import { PROFILE_TEMPLATES } from "@deepseek-ai/dsh-official-bundles";
+import { PROFILES_DIR, initProfile, readProfileManifest, writeProfileBundles } from "@deepseek-ai/dsh-app-boot"
 import yaml from "js-yaml"
 import {
   cpSync,
@@ -12,6 +7,8 @@ import {
   lstatSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
+  realpathSync,
   readlinkSync,
   renameSync,
   rmSync,
@@ -104,32 +101,78 @@ export function resolveHostModules(options: ResolveProductResourcesOptions) {
 // loaded, so the plugin cannot bind a second copy at a different version.
 function linkHostScope(productHome: string, hostModules: string) {
   const target = join(hostModules, "@deepseek-ai")
-  // Loud, not silent. Without this link every bundled plugin fails to resolve
-  // its harness imports, and the product patch points `web.searchProvider` at
-  // one of them — so a missing scope is not a degraded feature but every
-  // `web_search` answering `configured web provider "pawwork" is not
-  // registered`. Returning quietly would ship that as a mystery; throwing puts
-  // the real cause on the startup-failure page the lifecycle already renders.
+
   if (!existsSync(target)) {
     throw new Error(`DSH host module scope is missing at ${target}`)
   }
-  const link = join(productHome, "node_modules", "@deepseek-ai")
-  // `lstatSync`, not `existsSync`: the link this replaces is usually dangling —
-  // "run once from Downloads, then drag to /Applications" moves the host tree
-  // out from under it — and `existsSync` follows symlinks, so it reports a
-  // dangling link as absent and the `symlinkSync` below then fails `EEXIST`
-  // on every launch thereafter.
-  const existing = lstatSync(link, { throwIfNoEntry: false })
-  // An upgrade moves the host tree, so a link surviving from an older install
-  // would resolve to packages that are no longer there.
-  if (existing?.isSymbolicLink() === true && readlinkSync(link) === target) return
-  if (existing?.isSymbolicLink()) {
-    // Remove the link itself, including a Windows junction with a missing target.
-    unlinkSync(link)
-  } else if (existing !== undefined) {
-    rmSync(link, { force: true, recursive: true })
+
+  const packages = new Map<string, string>()
+
+  for (const entry of readdirSync(target)) {
+    const candidate = join(target, entry)
+
+    if (!existsSync(candidate)) continue
+
+    const packageRoot = realpathSync(candidate)
+    const manifestPath = join(packageRoot, "package.json")
+
+    if (!existsSync(manifestPath)) continue
+
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      name?: unknown
+    }
+
+    if (
+      typeof manifest.name !== "string" ||
+      !manifest.name.startsWith("@deepseek-ai/")
+    ) {
+      continue
+    }
+
+    const packageName = manifest.name.slice("@deepseek-ai/".length)
+
+    if (!packageName || packageName.includes("/")) {
+      throw new Error(`Invalid DSH host package name in ${manifestPath}`)
+    }
+
+    const previous = packages.get(packageName)
+
+    if (previous !== undefined && previous !== packageRoot) {
+      throw new Error(`Multiple host packages found for @deepseek-ai/${packageName}`)
+    }
+
+    packages.set(packageName, packageRoot)
   }
-  symlinkSync(target, link, "junction")
+
+  if (packages.size === 0) {
+    throw new Error(`No resolvable DSH packages found in ${target}`)
+  }
+
+  const link = join(productHome, "node_modules", "@deepseek-ai")
+  const existing = lstatSync(link, { throwIfNoEntry: false })
+
+  // Remove an old scope junction, but preserve a real directory.
+  if (existing?.isSymbolicLink()) {
+    unlinkSync(link)
+  }
+
+  mkdirSync(link, { recursive: true })
+
+  const linkType = process.platform === "win32" ? "junction" : "dir"
+
+  for (const [packageName, packageRoot] of packages) {
+    const packageLink = join(link, packageName)
+    const current = lstatSync(packageLink, { throwIfNoEntry: false })
+
+    if (current?.isSymbolicLink()) {
+      unlinkSync(packageLink)
+    } else if (current !== undefined) {
+      rmSync(packageLink, { force: true, recursive: true })
+    }
+
+    // Absolute targets preserve pnpm's original relative-link locations.
+    symlinkSync(packageRoot, packageLink, linkType)
+  }
 }
 
 // `dsh web` loads the `web` profile. PawWork's composition is its last bundle:

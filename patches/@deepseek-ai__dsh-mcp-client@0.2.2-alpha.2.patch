@@ -1,0 +1,72 @@
+diff --git a/lib/index.js b/lib/index.js
+index a0c19c8..e1fd96d 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,7 +1,7 @@
+ import z from "@deepseek-ai/schemastery";
+ import { scopeOf } from "@deepseek-ai/dsh-scope";
+ import { MAX_TIMER_DELAY_MS } from "@deepseek-ai/dsh-timeout";
+-import { Client, StreamableHTTPClientTransport, specTypeSchemas } from "@modelcontextprotocol/client";
++import { Client, StreamableHTTPClientTransport, UnauthorizedError, auth, specTypeSchemas } from "@modelcontextprotocol/client";
+ import { assertNever } from "@deepseek-ai/dsh-util-values";
+ import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
+ import { scrubbedParentEnv } from "@deepseek-ai/dsh-subprocess";
+@@ -33,9 +33,11 @@ function buildChildEnv(extra) {
+ * Create an MCP transport from the resolved plugin config.
+ *
+ * @param config - Resolved plugin config discriminated on `transport`.
++* @param authProvider - OAuth client provider the host supplied for this
++* server, or `undefined` for servers that need no authorization.
+ * @returns A connected-ready MCP Transport (stdio or Streamable HTTP).
+ */
+-function createTransport(config) {
++function createTransport(config, authProvider) {
+ 	switch (config.transport) {
+ 		case "stdio": return new StdioClientTransport({
+ 			command: config.command,
+@@ -43,7 +45,14 @@ function createTransport(config) {
+ 			env: buildChildEnv(config.env),
+ 			cwd: config.cwd
+ 		});
+-		case "streamable-http": return new StreamableHTTPClientTransport(new URL(config.url), { requestInit: { headers: config.headers } });
++		case "streamable-http": return new StreamableHTTPClientTransport(new URL(config.url), {
++			// With an OAuth provider the provider's fetch owns header policy —
++			// configured headers reach the MCP origin only, never a foreign
++			// authorization server — so the blanket requestInit must not apply.
++			requestInit: authProvider ? undefined : { headers: config.headers },
++			authProvider,
++			fetch: authProvider?.fetch
++		});
+ 	}
+ }
+ //#endregion
+@@ -640,7 +649,11 @@ function startConnection(ctx, config, policy) {
+ 		}
+ 		let instructions;
+ 		try {
+-			transport = createTransport(config);
++			// An optional host-provided `mcpAuth` service answers with an OAuth
++			// client provider for this server; without the service the transport is
++			// built exactly as before.
++			const authProvider = ctx.get("mcpAuth")?.providerFor?.(config);
++			transport = createTransport(config, authProvider);
+ 			await generation.connect(transport);
+ 			if (hasClosed()) {
+ 				attemptSettled = true;
+@@ -832,4 +845,4 @@ async function apply(ctx, config) {
+ 	if (outcome.error !== void 0 && config.failOnStartupError) throw new Error(`mcp-client(${config.serverName}): initial connection or tool synchronization failed`, { cause: outcome.error });
+ }
+ //#endregion
+-export { Config, apply, createMcpToolDefinition, inject, name };
++export { Config, UnauthorizedError, apply, auth, createMcpToolDefinition, inject, name };
+diff --git a/lib/types/index.d.ts b/lib/types/index.d.ts
+index bd49f63..9cbb48a 100644
+--- a/lib/types/index.d.ts
++++ b/lib/types/index.d.ts
+@@ -87,4 +87,5 @@ export declare const Config: z<ConfigInput, Config>;
+  * @returns startup readiness after connection and initial tool discovery settle.
+  */
+ export declare function apply(ctx: Context, config: Config): Promise<void>;
++export { UnauthorizedError, auth } from "@modelcontextprotocol/client";
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file

@@ -1,0 +1,33 @@
+diff --git a/lib/index.js b/lib/index.js
+index 0520d6f80b4752e343c2d25790a110b9c6765147..6a25f28838b36258ebfcb5137b7316e02d25bb7f 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -418,7 +418,7 @@ const COMPLETIONS_COMPAT_GATE = {
+ 	vercelGatewayRouting: "withhold",
+ 	zaiToolStream: "withhold",
+ 	supportsOpenAIGrammarTools: "withhold",
+-	sendSessionAffinityHeaders: "withhold",
++	sendSessionAffinityHeaders: "offer",
+ 	supportsMidConvoSystemMessages: "withhold",
+ 	supportsMidConvoToolAdditions: "withhold",
+ 	sessionAffinityFormat: "withhold"
+@@ -656,6 +656,19 @@ function resolveModelCompat(provider, entry, route, base, api) {
+ */
+ function resolveRouteModels(request, validation = "strict") {
+ 	const { provider } = request;
++	// OpenCode Go requires a conversation id on every Completions request.
++	if (
++	    provider === "opencode-go" &&
++	    request.compat?.sendSessionAffinityHeaders === void 0
++	) {
++	    request = {
++	        ...request,
++	        compat: {
++	            ...request.compat,
++	            sendSessionAffinityHeaders: true
++	        }
++	    };
++	}
+ 	const defaults = catalogModels(provider);
+ 	const providerBaseUrl = catalogProvider(provider)?.baseUrl;
+ 	const configured = request.models ?? [];
