@@ -11,8 +11,8 @@ describe("packaged app locations", () => {
     expect(packagedAppEnv("prod", "darwin", "arm64")).toEqual({
       APP_NAME: "PawWork Fork",
       APP_OUT_DIR: "dist/mac-arm64",
-      APP_PATH: "dist/mac-arm64/PawWork.app",
-      EXECUTABLE_PATH: "dist/mac-arm64/PawWork.app/Contents/MacOS/PawWork",
+      APP_PATH: "dist/mac-arm64/PawWork Fork.app",
+      EXECUTABLE_PATH: "dist/mac-arm64/PawWork Fork.app/Contents/MacOS/PawWork",
     })
     expect(packagedAppEnv("dev", "darwin", "x64")).toEqual({
       APP_NAME: "PawWork Dev",
@@ -24,8 +24,8 @@ describe("packaged app locations", () => {
     expect(packagedAppEnv("prod", "win32", "x64")).toEqual({
       APP_NAME: "PawWork Fork",
       APP_OUT_DIR: "dist/win-unpacked",
-      APP_PATH: "dist/win-unpacked/PawWork.exe",
-      EXECUTABLE_PATH: "dist/win-unpacked/PawWork.exe",
+      APP_PATH: "dist/win-unpacked/PawWork Fork.exe",
+      EXECUTABLE_PATH: "dist/win-unpacked/PawWork Fork.exe",
     })
   })
 
