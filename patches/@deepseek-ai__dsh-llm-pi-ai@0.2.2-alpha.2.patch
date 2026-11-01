@@ -1,5 +1,5 @@
 diff --git a/lib/index.js b/lib/index.js
-index 0520d6f80b4752e343c2d25790a110b9c6765147..6a25f28838b36258ebfcb5137b7316e02d25bb7f 100644
+index 0520d6f80b4752e343c2d25790a110b9c6765147..b80a0309d5d70c927dfa6792100ffe7f039e1a15 100644
 --- a/lib/index.js
 +++ b/lib/index.js
 @@ -418,7 +418,7 @@ const COMPLETIONS_COMPAT_GATE = {
@@ -31,7 +31,34 @@ index 0520d6f80b4752e343c2d25790a110b9c6765147..6a25f28838b36258ebfcb5137b7316e0
  	const defaults = catalogModels(provider);
  	const providerBaseUrl = catalogProvider(provider)?.baseUrl;
  	const configured = request.models ?? [];
-@@ -2885,1 +2885,6 @@
+@@ -1169,6 +1182,7 @@ function resolveProfiles(providers, validation = "strict") {
+ 			...rest,
+ 			provider,
+ 			displayName,
++			usesBuiltinCatalog: (source.models?.length ?? 0) === 0 && source.baseURL === void 0 && source.api === void 0,
+ 			...apiKeyEnv === void 0 ? {} : { apiKeyEnv: credentialRef(apiKeyEnv) },
+ 			streamIdleTimeoutMs,
+ 			maxRequestImageBytes,
+@@ -1888,7 +1902,14 @@ var PiAiAdapter = class extends LlmAdapter {
+ 		const profile = this.profileOf(snapshot, provider);
+ 		const failure = profile.modelErrors.get(model) ?? (profile.piProvider === void 0 ? profile.catalogError : void 0);
+ 		if (failure !== void 0) throw new LlmError(failure, "INVALID_CONFIG");
+-		const resolved = snapshot.models.getModel(provider, model);
++		const alias = provider === "deepseek" && profile.usesBuiltinCatalog
++		        ? ({
++		                "deepseek-v4-flash": "deepseek-flash",
++		                "deepseek-v4-flash-vision-exp": "deepseek-flash"
++		        })[model]
++		        : void 0;
++		const resolved = snapshot.models.getModel(provider, model) ??
++		        (alias === void 0 ? void 0 : snapshot.models.getModel(provider, alias));
+ 		if (resolved === void 0) throw new LlmError(`pi-ai provider "${provider}" has no configured model "${model}"`, "UNKNOWN_MODEL");
+ 		return resolved;
+ 	}
+@@ -2869,7 +2890,12 @@ function directoryEntries(profiles, settingsNs) {
+ 			...error === void 0 ? {} : { error }
+ 		});
+ 	};
 -	for (const provider of catalogProviderIds()) declare(provider, provider);
 +	for (const provider of catalogProviderIds()) {
 +		// DSH 0.2.2-alpha.2 exposes no authorization wire namespace, so the
@@ -39,3 +66,6 @@ index 0520d6f80b4752e343c2d25790a110b9c6765147..6a25f28838b36258ebfcb5137b7316e0
 +		if (provider === "openai-codex") continue;
 +		declare(provider, provider);
 +	}
+ 	for (const [provider, profile] of profiles) declare(provider, profile.displayName, profile.catalogError);
+ 	return [...entries.values()];
+ }
