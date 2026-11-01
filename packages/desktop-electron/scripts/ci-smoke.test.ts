@@ -284,6 +284,7 @@ describe("ci smoke helpers", () => {
     automationSettingsEntryVisible: true,
     updateSettingsEntryVisible: true,
     webSearchCardVisible: true,
+    webSearchItemIds: ["pawwork-web-search"],
     webSearchConfiguredBeforeSave: false,
     webSearchUnsavedShown: true,
     webSearchSaveWorks: true,
@@ -320,6 +321,7 @@ describe("ci smoke helpers", () => {
     windowsInsetMatchesDocumentDirection: true,
     windowsBrowseDirectoryPickerWorked: true,
     expandedNewSessionFollowsTitlebar: true,
+    expandedNewSessionGap: 8,
     sidebarPrimaryActionCenterOffsets: { newSession: 0 },
     collapsedSidebarFullyMergesWithContent: true,
     sessionHeaderComposerLeftAlignmentOffset: { expanded: 0, collapsed: 0 },
@@ -445,7 +447,7 @@ describe("ci smoke helpers", () => {
     // asserted here. A new field landing outside `broken` means the smoke
     // gathers something nothing checks.
     const unchecked = Object.keys(healthy).filter((field) => !(field in broken))
-    expect(unchecked.sort()).toEqual(["platform", "sessionId", "sessionIdsBeforeRestart", "webSearchFailureText"])
+    expect(unchecked.sort()).toEqual(["expandedNewSessionGap", "platform", "sessionId", "sessionIdsBeforeRestart", "webSearchFailureText", "webSearchItemIds"])
   })
 
   test("reports every failing capability at once, not just the first", () => {
