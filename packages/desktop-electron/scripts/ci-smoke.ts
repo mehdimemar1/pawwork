@@ -59,6 +59,7 @@ export type CiSmokeProductSnapshot = {
   automationSettingsEntryVisible: boolean
   updateSettingsEntryVisible: boolean
   webSearchCardVisible: boolean
+  webSearchItemIds: string[]
   webSearchConfiguredBeforeSave: boolean
   webSearchUnsavedShown: boolean
   webSearchSaveWorks: boolean
@@ -95,6 +96,7 @@ export type CiSmokeProductSnapshot = {
   windowsInsetMatchesDocumentDirection: boolean
   windowsBrowseDirectoryPickerWorked: boolean
   expandedNewSessionFollowsTitlebar: boolean
+  expandedNewSessionGap: number
   sidebarPrimaryActionCenterOffsets: { newSession: number | null }
   collapsedSidebarFullyMergesWithContent: boolean
   sessionHeaderComposerLeftAlignmentOffset: { expanded: number | null; collapsed: number | null }
@@ -595,9 +597,17 @@ export async function inspectCiSmokeProduct(target: CdpTarget, workspacePath: st
         ? titlebarInsetLeft > 0 && titlebarInsetRight === 0
         : titlebarInsetLeft === 0 && titlebarInsetRight > 0)
     const expandedNewSession = expandedPrimaryActions.newSession
-    const expandedNewSessionGap = expandedNewSession
+    let expandedNewSessionGap = expandedNewSession
       ? expandedNewSession.getBoundingClientRect().top - titlebarStripHeight
       : -1
+    // The native inset arrives from the main process over IPC. Wait for the
+    // titlebar band and the following sidebar row to settle before measuring;
+    // otherwise the first frame on a slower development runner can report a
+    // transient zero-height gap.
+    for (let frame = 0; frame < 30 && expandedNewSession && !(expandedNewSessionGap >= 8 && expandedNewSessionGap <= 16); frame += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 16))
+      expandedNewSessionGap = expandedNewSession.getBoundingClientRect().top - titlebarStripHeight
+    }
     const expandedNewSessionFollowsTitlebar = !/^Mac/i.test(navigator.platform)
       || titlebarInsetLeft === 0
       || (expandedNewSessionGap >= 8 && expandedNewSessionGap <= 16)
@@ -684,18 +694,24 @@ export async function inspectCiSmokeProduct(target: CdpTarget, workspacePath: st
     // halves fail independently. The page renders only once its form is served,
     // so its presence is evidence for both halves at once.
     settingsCloseButton()?.click()
-    await new Promise((resolve) => setTimeout(resolve, 50))
+    // Let the Settings detail finish its exit transition before switching to
+    // Plugins; packaged Windows runners need a little longer than a renderer
+    // animation frame for the navigation surface to become interactive.
+    await new Promise((resolve) => setTimeout(resolve, 180))
     visibleButton(/^(插件|Plugins)$/i)?.click()
     let webSearchItem = null
-    for (let attempt = 0; attempt < 40 && !webSearchItem; attempt += 1) {
+    for (let attempt = 0; attempt < 120 && !webSearchItem; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 50))
       webSearchItem = document.querySelector('[data-plugin-item="pawwork-web-search"] button')
     }
     webSearchItem?.click()
-    for (let attempt = 0; attempt < 20 && !visible(document.querySelector(".pawwork-websearch-body")); attempt += 1) {
+    for (let attempt = 0; attempt < 80 && !visible(document.querySelector(".pawwork-websearch-body")); attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 50))
     }
     const webSearchCardVisible = visible(document.querySelector(".pawwork-websearch-body"))
+    const webSearchItemIds = Array.from(document.querySelectorAll("[data-plugin-item]"))
+      .map((element) => element.getAttribute("data-plugin-item") || "")
+      .filter(Boolean)
     // A write that stops inside the renderer is invisible to every Host-side
     // assertion, so this drives the real form and reads back what it says.
     const webSearchConfiguredBeforeSave = visible(document.querySelector(".pawwork-websearch-badge"))
@@ -994,6 +1010,7 @@ export async function inspectCiSmokeProduct(target: CdpTarget, workspacePath: st
       automationSettingsEntryVisible,
       updateSettingsEntryVisible,
       webSearchCardVisible,
+      webSearchItemIds,
       webSearchConfiguredBeforeSave,
       webSearchUnsavedShown,
       webSearchSaveWorks,
@@ -1030,6 +1047,7 @@ export async function inspectCiSmokeProduct(target: CdpTarget, workspacePath: st
       windowsInsetMatchesDocumentDirection,
       windowsBrowseDirectoryPickerWorked,
       expandedNewSessionFollowsTitlebar,
+      expandedNewSessionGap,
       sidebarPrimaryActionCenterOffsets,
       collapsedSidebarFullyMergesWithContent,
       sessionHeaderComposerLeftAlignmentOffset: {
@@ -1279,7 +1297,7 @@ export function assertCiSmokeProduct(snapshot: CiSmokeProductSnapshot, platform:
       : "Windows did not create the smoke workspace through the in-app browse directory picker",
     snapshot.expandedNewSessionFollowsTitlebar
       ? null
-      : "expanded New session action leaves an empty brand-row gap below the titlebar",
+      : `expanded New session action leaves an empty brand-row gap below the titlebar (gap=${snapshot.expandedNewSessionGap}px, strip=${snapshot.titlebarStripHeight}px, inset=${snapshot.titlebarInsetLeft}px)`,
     Object.values(snapshot.sidebarPrimaryActionCenterOffsets).every((offset) => offset !== null && Math.abs(offset) <= 1)
       ? null
       : `expanded and collapsed sidebar primary-action center offsets are ${JSON.stringify(snapshot.sidebarPrimaryActionCenterOffsets)}`,
@@ -1329,7 +1347,7 @@ export function assertCiSmokeProduct(snapshot: CiSmokeProductSnapshot, platform:
     snapshot.integrationsEntryVisible ? null : "Integrations settings entry is not visible",
     snapshot.mcpOAuthSurfaceVisible ? null : "Integrations section did not open",
     snapshot.mcpOAuthAddFormVisible ? null : "Integrations add-server form is not rendered",
-    snapshot.webSearchCardVisible ? null : "PawWork web search settings card is not in the Plugins section",
+    snapshot.webSearchCardVisible ? null : `PawWork web search settings card is not in the Plugins section (items: ${snapshot.webSearchItemIds.join(", ") || "none"})`,
     snapshot.webSearchConfiguredBeforeSave
       ? "PawWork web search card already reported a configured key before the form wrote one"
       : null,
