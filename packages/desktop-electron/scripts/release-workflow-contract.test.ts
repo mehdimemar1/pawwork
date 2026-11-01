@@ -39,7 +39,7 @@ function runSourceValidation(phase: string, githubRef: string, sourceRef = "") {
   )
   if (!validation?.run) throw new Error("release source validation step is missing")
 
-  return spawnSync("bash", ["-c", match.groups.script.replace(/^ {10}/gm, "")], {
+  return spawnSync("bash", ["-c", validation.run], {
     encoding: "utf8",
     env: {
       ...process.env,
