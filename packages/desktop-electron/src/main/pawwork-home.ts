@@ -19,7 +19,7 @@ const PAWWORK_HOME_DIR_NAME = ".pawwork"
 // Retiring v1 and hoisting this to ~/.pawwork is what fixes that; configuring
 // the plugin cannot, because dsh-web-app disables the global entry and every
 // agent preset mounts its own.
-const DSH_HOME_DIR_NAME: Record<PawWorkChannel, string> = { dev: "dsh-dev", prod: "dsh" }
+const DSH_HOME_DIR_NAME: Record<PawWorkChannel, string> = { dev: "dsh-dev", prod: "dsh-fork" }
 
 const DSH_MOVED_MARKER_NAME = "dsh-moved.json"
 
