@@ -76,7 +76,7 @@ function collectEvents() {
 describe("PawWork home", () => {
   test("resolves the DSH home per channel under the home dotdir", () => {
     expect(resolveDshHome({ channel: "prod", homeRoot: "/Users/pawwork" })).toBe(
-      join("/Users/pawwork", ".pawwork", "dsh"),
+      join("/Users/pawwork", ".pawwork", "dsh-fork"),
     )
     expect(resolveDshHome({ channel: "dev", homeRoot: "/Users/pawwork" })).toBe(
       join("/Users/pawwork", ".pawwork", "dsh-dev"),
