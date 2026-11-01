@@ -29,7 +29,7 @@ async function writeLocalizedMacDisplayName(resourcesDir: string, channel: PawWo
   }
 }
 
-const repositoryUrl = (channel: PawWorkChannel) => `https://github.com/Astro-Han/${getPublishConfig(channel)?.repo ?? "pawwork"}`
+const repositoryUrl = (channel: PawWorkChannel) => `https://github.com/${PAWWORK_RELEASE_OWNER}/${getPublishConfig(channel)?.repo ?? "pawwork"}`
 
 const getBase = (channel: PawWorkChannel): Configuration => ({
   artifactName: "pawwork-${os}-${arch}-${version}.${ext}",
@@ -130,10 +130,10 @@ const getBase = (channel: PawWorkChannel): Configuration => ({
   dmg: {
     sign: true,
   },
-  // Dev and packaged builds register the same scheme under their displayed name.
+  // Each install channel owns a distinct URL scheme; the fork cannot hijack upstream pawwork:// links.
   protocols: {
     name: PAWWORK_APP[channel].name,
-    schemes: ["pawwork"],
+    schemes: [PAWWORK_APP[channel].protocolScheme],
   },
   win: {
     electronLanguages: ["en-US", "zh-CN"],
