@@ -10,7 +10,9 @@ import { PAWWORK_APP, localizedPawWorkName } from "./src/main/app-identity"
 // known user-visible bug is still present.
 const script = readFileSync(join(import.meta.dirname, "resources", "installer.nsh"), "utf8")
 
-const appNames = Object.values(PAWWORK_APP).map((app) => app.name)
+// The installer still recognizes the legacy PawWork shortcut so upgrades can
+// remove it; the other two names are the independent Dev and Fork channels.
+const appNames = ["PawWork", ...Object.values(PAWWORK_APP).map((app) => app.name)]
 
 const macros = new Map(
   [...script.matchAll(/^[^\S\r\n]*!macro (\w+)\r?\n([\s\S]*?)\r?\n[^\S\r\n]*!macroend/gm)]
