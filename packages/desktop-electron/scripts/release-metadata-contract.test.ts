@@ -240,7 +240,7 @@ describe.skipIf(process.platform === "win32")("release metadata finalizer", () =
     const [stderr, exitCode] = await Promise.all([proc.stderr, proc.exited])
 
     expect(exitCode).not.toBe(0)
-    expect(stderr).toContain("Failed to download existing ${MAC_METADATA_FILE}")
+    expect(stderr).toContain(`Failed to download existing ${MAC_METADATA_FILE}`)
     expect(stderr).toContain("rate limit exceeded")
   })
 
@@ -262,7 +262,7 @@ describe.skipIf(process.platform === "win32")("release metadata finalizer", () =
 
     const [stderr, exitCode] = await Promise.all([proc.stderr, proc.exited])
     expect(exitCode).not.toBe(0)
-    expect(stderr).toContain("Failed to download existing ${MAC_METADATA_FILE}")
+    expect(stderr).toContain(`Failed to download existing ${MAC_METADATA_FILE}`)
     expect(stderr).toContain("HTTP 404: Not Found")
   })
 
@@ -307,7 +307,7 @@ describe.skipIf(process.platform === "win32")("release metadata finalizer", () =
 
     const [stderr, exitCode] = await Promise.all([proc.stderr, proc.exited])
     expect(exitCode).not.toBe(0)
-    expect(stderr).toContain("Existing ${MAC_METADATA_FILE} from EXISTING_LATEST_YML_DIR has version 0.2.3")
+    expect(stderr).toContain(`Existing ${MAC_METADATA_FILE} from EXISTING_LATEST_YML_DIR has version 0.2.3`)
   })
 })
 
