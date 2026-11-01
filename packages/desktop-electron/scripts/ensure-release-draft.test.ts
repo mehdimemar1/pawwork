@@ -79,7 +79,7 @@ describe("ensure-release-draft", () => {
   test("jitters before creating and lets the list endpoint settle before judging", () => {
     const source = readFileSync(join(import.meta.dirname, "ensure-release-draft.ts"), "utf8")
     expect(source).toMatch(/await sleep\(Math\.random\(\) \* CREATE_JITTER_MS\)/)
-    expect(source).toMatch(/await sleep\(CREATE_SETTLE_MS\)\n\n\s*const settled =/)
+    expect(source).toMatch(/await sleep\(CREATE_SETTLE_MS\)\s+const settled =/)
     // A missing token silently downgrades the list to anonymous, which cannot
     // see drafts at all.
     expect(source).toMatch(/requireEnv\("GH_TOKEN"\)/)
