@@ -64,14 +64,14 @@ const baseRelease: GithubRelease = {
       browser_download_url: "https://example.com/pawwork-win-x64-2026.4.28.exe.blockmap",
     },
     {
-      name: "latest-v2.yml",
-      url: "https://api.example.com/assets/latest-v2.yml",
-      browser_download_url: "https://example.com/latest-v2.yml",
+      name: "latest-fork.yml",
+      url: "https://api.example.com/assets/latest-fork.yml",
+      browser_download_url: "https://example.com/latest-fork.yml",
     },
     {
-      name: "latest-v2-mac.yml",
-      url: "https://api.example.com/assets/latest-v2-mac.yml",
-      browser_download_url: "https://example.com/latest-v2-mac.yml",
+      name: "latest-fork-mac.yml",
+      url: "https://api.example.com/assets/latest-fork-mac.yml",
+      browser_download_url: "https://example.com/latest-fork-mac.yml",
     },
   ],
 }
@@ -102,12 +102,12 @@ describe("verify-release", () => {
       "pawwork-mac-x64-2026.4.28.zip.blockmap",
       "pawwork-win-x64-2026.4.28.exe",
       "pawwork-win-x64-2026.4.28.exe.blockmap",
-      "latest-v2-mac.yml",
-      "latest-v2.yml",
+      "latest-fork-mac.yml",
+      "latest-fork.yml",
     ])
     expect(releaseUpdaterAssetNames("2026.4.28")).toEqual({
-      "latest-v2.yml": ["pawwork-win-x64-2026.4.28.exe"],
-      "latest-v2-mac.yml": ["pawwork-mac-arm64-2026.4.28.zip", "pawwork-mac-x64-2026.4.28.zip"],
+      "latest-fork.yml": ["pawwork-win-x64-2026.4.28.exe"],
+      "latest-fork-mac.yml": ["pawwork-mac-arm64-2026.4.28.zip", "pawwork-mac-x64-2026.4.28.zip"],
     })
   })
 
@@ -154,7 +154,7 @@ path: pawwork-win-x64-2026.4.28.exe
     expect(
       verifyReleasePayload({
         release: baseRelease,
-        metadata: { "latest-v2.yml": validLatestYml, "latest-v2-mac.yml": validLatestMacYml },
+        metadata: { "latest-fork.yml": validLatestYml, "latest-fork-mac.yml": validLatestMacYml },
       }),
     ).toEqual([])
   })
@@ -162,26 +162,26 @@ path: pawwork-win-x64-2026.4.28.exe
   test("rejects updater metadata without a top-level version", () => {
     const failures = verifyReleasePayload({
       release: baseRelease,
-      metadata: { "latest-v2.yml": "files:\n  - url: pawwork-win-x64-2026.4.28.exe\n", "latest-v2-mac.yml": validLatestMacYml },
+      metadata: { "latest-fork.yml": "files:\n  - url: pawwork-win-x64-2026.4.28.exe\n", "latest-fork-mac.yml": validLatestMacYml },
     })
 
-    expect(failures).toContain("latest-v2.yml does not declare version 2026.4.28")
+    expect(failures).toContain("latest-fork.yml does not declare version 2026.4.28")
   })
 
   test("rejects updater metadata for a different release version", () => {
     const failures = verifyReleasePayload({
       release: baseRelease,
-      metadata: { "latest-v2.yml": "version: 2026.4.27\nfiles:\n  - url: pawwork-win-x64-2026.4.28.exe\n", "latest-v2-mac.yml": validLatestMacYml },
+      metadata: { "latest-fork.yml": "version: 2026.4.27\nfiles:\n  - url: pawwork-win-x64-2026.4.28.exe\n", "latest-fork-mac.yml": validLatestMacYml },
     })
 
-    expect(failures).toContain("latest-v2.yml version 2026.4.27 does not match release 2026.4.28")
+    expect(failures).toContain("latest-fork.yml version 2026.4.27 does not match release 2026.4.28")
   })
 
   test("accepts updater metadata entries with full download URLs", () => {
     expect(
       verifyReleasePayload({
         release: baseRelease,
-        metadata: { "latest-v2.yml": "version: 2026.4.28\nfiles:\n  - url: https://github.com/Astro-Han/pawwork/releases/download/v2026.4.28/pawwork-win-x64-2026.4.28.exe\n", "latest-v2-mac.yml": "version: 2026.4.28\nfiles:\n  - url: https://github.com/Astro-Han/pawwork/releases/download/v2026.4.28/pawwork-mac-arm64-2026.4.28.zip\n  - url: https://github.com/Astro-Han/pawwork/releases/download/v2026.4.28/pawwork-mac-x64-2026.4.28.zip\n" },
+        metadata: { "latest-fork.yml": "version: 2026.4.28\nfiles:\n  - url: https://github.com/mehdimemar1/pawwork/releases/download/v2026.4.28/pawwork-win-x64-2026.4.28.exe\n", "latest-fork-mac.yml": "version: 2026.4.28\nfiles:\n  - url: https://github.com/mehdimemar1/pawwork/releases/download/v2026.4.28/pawwork-mac-arm64-2026.4.28.zip\n  - url: https://github.com/mehdimemar1/pawwork/releases/download/v2026.4.28/pawwork-mac-x64-2026.4.28.zip\n" },
       }),
     ).toEqual([])
   })
@@ -190,9 +190,9 @@ path: pawwork-win-x64-2026.4.28.exe
     expect(
       verifyReleasePayload({
         release: baseRelease,
-        metadata: { "latest-v2.yml": validLatestYml, "latest-v2-mac.yml": "files:\n  - url: pawwork-mac-x64-2026.4.28.zip\n" },
+        metadata: { "latest-fork.yml": validLatestYml, "latest-fork-mac.yml": "files:\n  - url: pawwork-mac-x64-2026.4.28.zip\n" },
       }),
-    ).toContain("latest-v2-mac.yml does not include pawwork-mac-arm64-2026.4.28.zip")
+    ).toContain("latest-fork-mac.yml does not include pawwork-mac-arm64-2026.4.28.zip")
   })
 
   test("reports updater metadata that points to a missing asset", () => {
@@ -202,9 +202,9 @@ path: pawwork-win-x64-2026.4.28.exe
           ...baseRelease,
           assets: baseRelease.assets.filter((asset) => asset.name !== "pawwork-mac-arm64-2026.4.28.zip"),
         },
-        metadata: { "latest-v2.yml": validLatestYml, "latest-v2-mac.yml": validLatestMacYml },
+        metadata: { "latest-fork.yml": validLatestYml, "latest-fork-mac.yml": validLatestMacYml },
       }),
-    ).toContain("latest-v2-mac.yml references missing release asset: pawwork-mac-arm64-2026.4.28.zip")
+    ).toContain("latest-fork-mac.yml references missing release asset: pawwork-mac-arm64-2026.4.28.zip")
   })
 
   test("reports missing installer and updater sidecar assets", () => {
@@ -216,7 +216,7 @@ path: pawwork-win-x64-2026.4.28.exe
             asset.name !== "pawwork-mac-arm64-2026.4.28.dmg" && asset.name !== "pawwork-win-x64-2026.4.28.exe.blockmap",
         ),
       },
-      metadata: { "latest-v2.yml": validLatestYml, "latest-v2-mac.yml": validLatestMacYml },
+      metadata: { "latest-fork.yml": validLatestYml, "latest-fork-mac.yml": validLatestMacYml },
     })
 
     expect(failures).toContain("Missing release asset: pawwork-mac-arm64-2026.4.28.dmg")
@@ -227,29 +227,29 @@ path: pawwork-win-x64-2026.4.28.exe
     const failures = verifyReleasePayload({
       release: {
         ...baseRelease,
-        assets: baseRelease.assets.filter((asset) => asset.name !== "latest-v2.yml" && asset.name !== "latest-v2-mac.yml"),
+        assets: baseRelease.assets.filter((asset) => asset.name !== "latest-fork.yml" && asset.name !== "latest-fork-mac.yml"),
       },
-      metadata: { "latest-v2.yml": "", "latest-v2-mac.yml": "" },
+      metadata: { "latest-fork.yml": "", "latest-fork-mac.yml": "" },
     })
 
-    expect(failures).toContain("Missing release asset: latest-v2.yml")
-    expect(failures).toContain("Missing release asset: latest-v2-mac.yml")
-    expect(failures).toContain("latest-v2.yml does not include pawwork-win-x64-2026.4.28.exe")
-    expect(failures).toContain("latest-v2-mac.yml does not include pawwork-mac-arm64-2026.4.28.zip")
-    expect(failures).toContain("latest-v2-mac.yml does not include pawwork-mac-x64-2026.4.28.zip")
+    expect(failures).toContain("Missing release asset: latest-fork.yml")
+    expect(failures).toContain("Missing release asset: latest-fork-mac.yml")
+    expect(failures).toContain("latest-fork.yml does not include pawwork-win-x64-2026.4.28.exe")
+    expect(failures).toContain("latest-fork-mac.yml does not include pawwork-mac-arm64-2026.4.28.zip")
+    expect(failures).toContain("latest-fork-mac.yml does not include pawwork-mac-x64-2026.4.28.zip")
   })
 
   test("reports draft releases", () => {
     expect(
       verifyReleasePayload({
         release: { ...baseRelease, draft: true },
-        metadata: { "latest-v2.yml": validLatestYml, "latest-v2-mac.yml": validLatestMacYml },
+        metadata: { "latest-fork.yml": validLatestYml, "latest-fork-mac.yml": validLatestMacYml },
       }),
     ).toContain("Release v2026.4.28 is still a draft")
   })
 
   test("allowDraft suppresses the draft failure but keeps every other check", () => {
-    const metadata = { "latest-v2.yml": validLatestYml, "latest-v2-mac.yml": validLatestMacYml }
+    const metadata = { "latest-fork.yml": validLatestYml, "latest-fork-mac.yml": validLatestMacYml }
 
     // A complete draft is fully accepted when drafts are allowed.
     expect(
@@ -276,7 +276,7 @@ path: pawwork-win-x64-2026.4.28.exe
     expect(
       verifyReleasePayload({
         release: { ...baseRelease, prerelease: true },
-        metadata: { "latest-v2.yml": validLatestYml, "latest-v2-mac.yml": validLatestMacYml },
+        metadata: { "latest-fork.yml": validLatestYml, "latest-fork-mac.yml": validLatestMacYml },
       }),
     ).toContain("Release v2026.4.28 is marked as a prerelease")
   })
@@ -284,19 +284,19 @@ path: pawwork-win-x64-2026.4.28.exe
   test("reports malformed updater metadata as missing required updater entries", () => {
     const failures = verifyReleasePayload({
       release: baseRelease,
-      metadata: { "latest-v2.yml": "files:\n  - broken: pawwork-win-x64-2026.4.28.exe\n", "latest-v2-mac.yml": "files:\n  - broken: pawwork-mac-arm64-2026.4.28.zip\n" },
+      metadata: { "latest-fork.yml": "files:\n  - broken: pawwork-win-x64-2026.4.28.exe\n", "latest-fork-mac.yml": "files:\n  - broken: pawwork-mac-arm64-2026.4.28.zip\n" },
     })
 
-    expect(failures).toContain("latest-v2.yml does not include pawwork-win-x64-2026.4.28.exe")
-    expect(failures).toContain("latest-v2-mac.yml does not include pawwork-mac-arm64-2026.4.28.zip")
-    expect(failures).toContain("latest-v2-mac.yml does not include pawwork-mac-x64-2026.4.28.zip")
+    expect(failures).toContain("latest-fork.yml does not include pawwork-win-x64-2026.4.28.exe")
+    expect(failures).toContain("latest-fork-mac.yml does not include pawwork-mac-arm64-2026.4.28.zip")
+    expect(failures).toContain("latest-fork-mac.yml does not include pawwork-mac-x64-2026.4.28.zip")
   })
 
   test("reports invalid release tags in release payloads without throwing", () => {
     expect(
       verifyReleasePayload({
         release: { ...baseRelease, tag_name: "v2026.4.28.1" },
-        metadata: { "latest-v2.yml": "", "latest-v2-mac.yml": "" },
+        metadata: { "latest-fork.yml": "", "latest-fork-mac.yml": "" },
       }),
     ).toEqual(["Invalid release tag: v2026.4.28.1. Expected vYYYY.M.D or YYYY.M.D."])
   })
@@ -379,7 +379,7 @@ describe("fetchReleasesByTag", () => {
   test("walks every page and collects matches past the first one", async () => {
     const requested: string[] = []
     const pages = [fullPage(1), [...fullPage(200), release(7, "v2026.6.1")], [release(8, "v2026.6.1")]]
-    const matches = await fetchReleasesByTag("Astro-Han/pawwork", "v2026.6.1", async (url) => {
+    const matches = await fetchReleasesByTag("mehdimemar1/pawwork", "v2026.6.1", async (url) => {
       requested.push(url)
       return pages[Number(new URL(url).searchParams.get("page")) - 1] ?? []
     })
@@ -392,7 +392,7 @@ describe("fetchReleasesByTag", () => {
 
   test("stops at the first short page", async () => {
     const requested: string[] = []
-    const matches = await fetchReleasesByTag("Astro-Han/pawwork", "v2026.6.1", async (url) => {
+    const matches = await fetchReleasesByTag("mehdimemar1/pawwork", "v2026.6.1", async (url) => {
       requested.push(url)
       return [release(7, "v2026.6.1")]
     })
@@ -403,7 +403,7 @@ describe("fetchReleasesByTag", () => {
 
   // Silently truncating the walk is the failure it exists to prevent.
   test("refuses to walk past the page cap instead of truncating", async () => {
-    await expect(fetchReleasesByTag("Astro-Han/pawwork", "v2026.6.1", async () => fullPage(1))).rejects.toThrow(
+    await expect(fetchReleasesByTag("mehdimemar1/pawwork", "v2026.6.1", async () => fullPage(1))).rejects.toThrow(
       /Refusing to look v2026\.6\.1 up past \d+ pages/,
     )
   })
