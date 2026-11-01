@@ -39,16 +39,19 @@ function runSourceValidation(phase: string, githubRef: string, sourceRef = "") {
   )
   if (!validation?.run) throw new Error("release source validation step is missing")
 
-  return spawnSync("bash", ["-c", validation.run], {
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      EXPECTED_SOURCE_REF: "main",
-      GITHUB_REF: githubRef,
-      PHASE: phase,
-      SOURCE_REF: sourceRef,
-    },
-  })
+  // Assign these inside Bash rather than through the Windows process
+  // environment: Git Bash/MSYS can normalize or drop mixed-case environment
+  // entries passed by spawnSync on Windows.
+  const shellQuote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`
+  const script = [
+    `export EXPECTED_SOURCE_REF=${shellQuote("main")}`,
+    `export GITHUB_REF=${shellQuote(githubRef)}`,
+    `export PHASE=${shellQuote(phase)}`,
+    `export SOURCE_REF=${shellQuote(sourceRef)}`,
+    validation.run,
+  ].join("\\n")
+
+  return spawnSync("bash", ["-c", script], { encoding: "utf8" })
 }
 
 describe("release workflow", () => {
