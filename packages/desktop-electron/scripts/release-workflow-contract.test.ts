@@ -49,7 +49,7 @@ function runSourceValidation(phase: string, githubRef: string, sourceRef = "") {
     `export PHASE=${shellQuote(phase)}`,
     `export SOURCE_REF=${shellQuote(sourceRef)}`,
     validation.run,
-  ].join("\\n")
+  ].join("\n")
 
   return spawnSync("bash", ["-c", script], { encoding: "utf8" })
 }
@@ -57,9 +57,9 @@ function runSourceValidation(phase: string, githubRef: string, sourceRef = "") {
 describe("release workflow", () => {
   test("accepts main branch submit and finalize sources", () => {
     const submit = runSourceValidation("submit", "refs/heads/main")
-    expect(submit.status, [submit.error?.message, submit.stdout, submit.stderr].filter(Boolean).join("\\n")).toBe(0)
+    expect(submit.status, [submit.error?.message, submit.stdout, submit.stderr].filter(Boolean).join("\n")).toBe(0)
     const finalize = runSourceValidation("finalize", "refs/tags/workflow-snapshot-1", "main")
-    expect(finalize.status, [finalize.error?.message, finalize.stdout, finalize.stderr].filter(Boolean).join("\\n")).toBe(0)
+    expect(finalize.status, [finalize.error?.message, finalize.stdout, finalize.stderr].filter(Boolean).join("\n")).toBe(0)
   })
 
   test("rejects release sources outside main", () => {
