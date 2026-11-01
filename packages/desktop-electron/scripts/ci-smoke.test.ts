@@ -116,7 +116,7 @@ describe("ci smoke helpers", () => {
     expect(appIdForSmoke("dev", "raw")).toBe("ai.pawwork.desktop.dev")
     expect(appIdForSmoke("prod", "raw")).toBe("ai.pawwork.desktop.dev")
     expect(appIdForSmoke("dev", "packaged")).toBe("ai.pawwork.desktop.dev")
-    expect(appIdForSmoke("prod", "packaged")).toBe("ai.pawwork.desktop")
+    expect(appIdForSmoke("prod", "packaged")).toBe("ai.pawwork.desktop.fork)
   })
 
   test("dshHomeForSmoke hangs the DSH home off the smoke home, not off its app data directory", () => {
@@ -127,7 +127,7 @@ describe("ci smoke helpers", () => {
 
   test("resolveCiSmokeReadyFile follows packaged channel app IDs", () => {
     expect(resolveCiSmokeReadyFile("/tmp/pawwork-ci-smoke", { channel: "prod", mode: "packaged" })).toBe(
-      path.join("/tmp/pawwork-ci-smoke", "ai.pawwork.desktop", "ci-smoke-ready.json"),
+      path.join("/tmp/pawwork-ci-smoke", "ai.pawwork.desktop.fork, "ci-smoke-ready.json"),
     )
   })
 
