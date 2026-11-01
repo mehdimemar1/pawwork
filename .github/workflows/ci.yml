@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, dsh-alpha-0.2.2-alpha.2]
   pull_request:
     branches: [main]
   workflow_dispatch:
