@@ -31,7 +31,7 @@ index 0520d6f80b4752e343c2d25790a110b9c6765147..6a25f28838b36258ebfcb5137b7316e0
  	const defaults = catalogModels(provider);
  	const providerBaseUrl = catalogProvider(provider)?.baseUrl;
  	const configured = request.models ?? [];
-@@ -2885,1 +2885,5 @@
+@@ -2885,1 +2885,6 @@
 -	for (const provider of catalogProviderIds()) declare(provider, provider);
 +	for (const provider of catalogProviderIds()) {
 +		// DSH 0.2.2-alpha.2 exposes no authorization wire namespace, so the
