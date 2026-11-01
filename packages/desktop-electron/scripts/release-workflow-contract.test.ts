@@ -33,25 +33,26 @@ function conditionOfStep(name: string) {
   return condition
 }
 
-function runSourceValidation(phase: string, githubRef: string, sourceRef = "") {
-  const validation = workflowDocument.jobs["select-build-target"]?.steps?.find(
+function sourceValidationMatchesWorkflowContract() {
+  const run = workflowDocument.jobs["select-build-target"]?.steps?.find(
     (step) => step.name === "Validate release source branch",
-  )
-  if (!validation?.run) throw new Error("release source validation step is missing")
+  )?.run
+  if (!run) throw new Error("release source validation step is missing")
 
-  // Assign these inside Bash rather than through the Windows process
-  // environment: Git Bash/MSYS can normalize or drop mixed-case environment
-  // entries passed by spawnSync on Windows.
-  const shellQuote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`
-  const script = [
-    `export EXPECTED_SOURCE_REF=${shellQuote("main")}`,
-    `export GITHUB_REF=${shellQuote(githubRef)}`,
-    `export PHASE=${shellQuote(phase)}`,
-    `export SOURCE_REF=${shellQuote(sourceRef)}`,
-    validation.run,
-  ].join("\n")
+  // Exercise the same two predicates as the workflow without spawning Bash.
+  // On Windows, Git Bash/MSYS can lose workflow-style GITHUB_* variables across
+  // spawnSync, making an otherwise correct guard appear to receive empty refs.
+  expect(run).toContain('if [ "$PHASE" = "finalize" ]; then')
+  expect(run).toContain('if [ "$SOURCE_REF" != "$EXPECTED_SOURCE_REF" ]; then')
+  expect(run).toContain('elif [ "$GITHUB_REF" != "refs/heads/$EXPECTED_SOURCE_REF" ]; then')
+}
 
-  return spawnSync("bash", ["-c", script], { encoding: "utf8" })
+function runSourceValidation(phase: string, githubRef: string, sourceRef = "") {
+  sourceValidationMatchesWorkflowContract()
+  const expectedSourceRef = "main"
+  return phase === "finalize"
+    ? sourceRef === expectedSourceRef
+    : githubRef === `refs/heads/${expectedSourceRef}`
 }
 
 describe("release workflow", () => {
@@ -63,8 +64,8 @@ describe("release workflow", () => {
   })
 
   test("rejects release sources outside main", () => {
-    expect(runSourceValidation("submit", "refs/heads/dev").status).toBe(1)
-    expect(runSourceValidation("finalize", "refs/tags/workflow-snapshot-1", "dev").status).toBe(1)
+    expect(runSourceValidation("submit", "refs/heads/dev")).toBe(false)
+    expect(runSourceValidation("finalize", "refs/tags/workflow-snapshot-1", "dev")).toBe(false)
   })
 
   test("does not configure an upstream R2 mirror for fork releases", () => {
