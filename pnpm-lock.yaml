@@ -28,7 +28,7 @@ overrides:
 
 patchedDependencies:
   '@deepseek-ai/dsh-api-workspace-controller@0.2.2-alpha.2': 4b7a1401ede95e5a9bb92d427f1ee7eb635b85c55a809c6381193370a8cb43d1
-  '@deepseek-ai/dsh-llm-pi-ai@0.2.2-alpha.2': 24d81bfadb3c4de6fb5c9e05106cfc239a28031c06456f1f6ea7178b43c89e87
+  '@deepseek-ai/dsh-llm-pi-ai@0.2.2-alpha.2': 07b532d45a6ae0bbb6c98863686b08774e0101a2f56ea195dd8c3f5242ef66fa
   '@deepseek-ai/dsh-mcp-client@0.2.2-alpha.2': e959aba5d381aa9307d5ce382bcbc9d49d8cd3bb3d6bdebd911c5f722ed47afc
 
 importers:
@@ -8753,7 +8753,7 @@ snapshots:
       '@deepseek-ai/dsh-llm': 0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)
       '@deepseek-ai/dsh-llm-deepseek-account': 0.2.2-alpha.2(@deepseek-ai/cordis-plugin-loader@1.0.7-alpha.1)(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-deepseek-account@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-agent@0.2.2-alpha.2(c09e321863b8ebb6167f522cda8f63dc))(@deepseek-ai/dsh-brand@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-llm@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-util-values@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)))(@deepseek-ai/dsh-launch-environment@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-llm-deepseek@0.2.2-alpha.2(a0554cab1bbee5b5c80eecdd6b7db58a))(@deepseek-ai/dsh-llm@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))
       '@deepseek-ai/dsh-llm-deepseek-api-key': 0.2.2-alpha.2(@deepseek-ai/cordis-plugin-loader@1.0.7-alpha.1)(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-credentials@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-launch-environment@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-llm-deepseek@0.2.2-alpha.2(a0554cab1bbee5b5c80eecdd6b7db58a))(@deepseek-ai/dsh-llm@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))
-      '@deepseek-ai/dsh-llm-pi-ai': 0.2.2-alpha.2(patch_hash=24d81bfadb3c4de6fb5c9e05106cfc239a28031c06456f1f6ea7178b43c89e87)(0318f9e617665b78b85de746f446e8a6)
+      '@deepseek-ai/dsh-llm-pi-ai': 0.2.2-alpha.2(patch_hash=07b532d45a6ae0bbb6c98863686b08774e0101a2f56ea195dd8c3f5242ef66fa)(0318f9e617665b78b85de746f446e8a6)
       '@deepseek-ai/dsh-llm-retry': 0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-agent@0.2.2-alpha.2(c09e321863b8ebb6167f522cda8f63dc))(@deepseek-ai/dsh-brand@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-llm@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-session-projection@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-session@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-scope@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))))(@deepseek-ai/dsh-session@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-scope@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)))(@deepseek-ai/dsh-timeout@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))
       '@deepseek-ai/dsh-mcp-resources': 0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-llm@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-scope@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-system-prompt@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-llm@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))(@deepseek-ai/dsh-scope@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)))(@deepseek-ai/dsh-tools@0.2.2-alpha.2(d570a50fd9051dfa7084c71da173b036))
       '@deepseek-ai/dsh-otel': 0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-session@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-scope@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)))
@@ -10095,7 +10095,7 @@ snapshots:
     optionalDependencies:
       '@deepseek-ai/cordis-plugin-loader': 1.0.7-alpha.1(@deepseek-ai/cordis@4.0.6-alpha.1)(node-addon-require-builtin@0.1.9)
 
-  '@deepseek-ai/dsh-llm-pi-ai@0.2.2-alpha.2(patch_hash=24d81bfadb3c4de6fb5c9e05106cfc239a28031c06456f1f6ea7178b43c89e87)(0318f9e617665b78b85de746f446e8a6)':
+  '@deepseek-ai/dsh-llm-pi-ai@0.2.2-alpha.2(patch_hash=07b532d45a6ae0bbb6c98863686b08774e0101a2f56ea195dd8c3f5242ef66fa)(0318f9e617665b78b85de746f446e8a6)':
     dependencies:
       '@deepseek-ai/cordis': 4.0.6-alpha.1(@deepseek-ai/cordis-plugin-include@1.0.11-alpha.1)(@deepseek-ai/cordis-plugin-loader@1.0.7-alpha.1)
       '@deepseek-ai/dsh-attachment': 0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1)(@deepseek-ai/dsh-brand@0.2.2-alpha.2(@deepseek-ai/cordis@4.0.6-alpha.1))

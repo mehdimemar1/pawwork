@@ -1,8 +1,16 @@
 diff --git a/lib/index.js b/lib/index.js
-index 0520d6f80b4752e343c2d25790a110b9c6765147..b80a0309d5d70c927dfa6792100ffe7f039e1a15 100644
+index 0520d6f80b4752e343c2d25790a110b9c6765147..4500e4273e9891e041c2fec934f1c51779832832 100644
 --- a/lib/index.js
 +++ b/lib/index.js
-@@ -418,7 +418,7 @@ const COMPLETIONS_COMPAT_GATE = {
+@@ -14,6 +14,7 @@ import { isContextOverflow } from "@earendil-works/pi-ai/utils/overflow";
+ import { homedir } from "node:os";
+ import { access } from "node:fs/promises";
+ import { resolve } from "node:path";
++import { clearRetryChain, gateFor, parseRetryAfter, rateLimitPauseMs, retryChainFor, retryChainKey, retrySettings, startRetryChain } from "./retry-gate.js";
+ //#region lib/types/replay.js
+ /**
+ * Durable pi-ai replay metadata and assistant-history reconstruction.
+@@ -418,7 +419,7 @@ const COMPLETIONS_COMPAT_GATE = {
  	vercelGatewayRouting: "withhold",
  	zaiToolStream: "withhold",
  	supportsOpenAIGrammarTools: "withhold",
@@ -11,7 +19,7 @@ index 0520d6f80b4752e343c2d25790a110b9c6765147..b80a0309d5d70c927dfa6792100ffe7f
  	supportsMidConvoSystemMessages: "withhold",
  	supportsMidConvoToolAdditions: "withhold",
  	sessionAffinityFormat: "withhold"
-@@ -656,6 +656,19 @@ function resolveModelCompat(provider, entry, route, base, api) {
+@@ -656,6 +657,19 @@ function resolveModelCompat(provider, entry, route, base, api) {
  */
  function resolveRouteModels(request, validation = "strict") {
  	const { provider } = request;
@@ -31,41 +39,220 @@ index 0520d6f80b4752e343c2d25790a110b9c6765147..b80a0309d5d70c927dfa6792100ffe7f
  	const defaults = catalogModels(provider);
  	const providerBaseUrl = catalogProvider(provider)?.baseUrl;
  	const configured = request.models ?? [];
-@@ -1169,6 +1182,7 @@ function resolveProfiles(providers, validation = "strict") {
- 			...rest,
- 			provider,
- 			displayName,
-+			usesBuiltinCatalog: (source.models?.length ?? 0) === 0 && source.baseURL === void 0 && source.api === void 0,
- 			...apiKeyEnv === void 0 ? {} : { apiKeyEnv: credentialRef(apiKeyEnv) },
- 			streamIdleTimeoutMs,
- 			maxRequestImageBytes,
-@@ -1888,7 +1902,14 @@ var PiAiAdapter = class extends LlmAdapter {
- 		const profile = this.profileOf(snapshot, provider);
- 		const failure = profile.modelErrors.get(model) ?? (profile.piProvider === void 0 ? profile.catalogError : void 0);
- 		if (failure !== void 0) throw new LlmError(failure, "INVALID_CONFIG");
--		const resolved = snapshot.models.getModel(provider, model);
-+		const alias = provider === "deepseek" && profile.usesBuiltinCatalog
-+		        ? ({
-+		                "deepseek-v4-flash": "deepseek-flash",
-+		                "deepseek-v4-flash-vision-exp": "deepseek-flash"
-+		        })[model]
-+		        : void 0;
-+		const resolved = snapshot.models.getModel(provider, model) ??
-+		        (alias === void 0 ? void 0 : snapshot.models.getModel(provider, alias));
- 		if (resolved === void 0) throw new LlmError(`pi-ai provider "${provider}" has no configured model "${model}"`, "UNKNOWN_MODEL");
- 		return resolved;
- 	}
-@@ -2869,7 +2890,12 @@ function directoryEntries(profiles, settingsNs) {
- 			...error === void 0 ? {} : { error }
- 		});
- 	};
--	for (const provider of catalogProviderIds()) declare(provider, provider);
-+	for (const provider of catalogProviderIds()) {
-+		// DSH 0.2.2-alpha.2 exposes no authorization wire namespace, so the
-+		// OAuth-only ChatGPT provider cannot complete sign-in in this host.
-+		if (provider === "openai-codex") continue;
-+		declare(provider, provider);
-+	}
- 	for (const [provider, profile] of profiles) declare(provider, profile.displayName, profile.catalogError);
- 	return [...entries.values()];
+@@ -1458,6 +1472,7 @@ function classifyPiAiError(message) {
+ 	if (/\b(?:401|403)\b/.test(message)) return "AUTH";
+ 	if (isQuotaExceededError(message)) return QUOTA_EXCEEDED_CODE;
+ 	if (/\b429\b|rate.?limit/i.test(message)) return "RATE_LIMIT";
++	if (/\b408\b/.test(message)) return "TIMEOUT";
+ 	if (/\b413\b|failed to buffer the request body:\s*length limit exceeded|payload too large|request body too large/i.test(message)) return "INVALID_REQUEST";
+ 	if (/\b400\b|invalid.?request/i.test(message)) return "INVALID_REQUEST";
+ 	if (/\b5\d\d\b/.test(message)) return "SERVER";
+@@ -1466,6 +1481,13 @@ function classifyPiAiError(message) {
+ 	if (/\b(?:network|connection|socket|fetch)\b|\bECONN[A-Z]+\b/i.test(message) || /\b(?:other side closed|HTTP2 request did not get a response|WebSocket closed unexpectedly)\b/i.test(message) || /\bterminated\b|premature close/i.test(message)) return "TRANSPORT";
+ 	return "PI_AI_ERROR";
  }
++function classifyProviderStatus(status, fallback) {
++	if (status === 408) return "TIMEOUT";
++	if (status === 429) return "RATE_LIMIT";
++	if (status >= 500) return "SERVER";
++	if (status >= 400) return status === 401 || status === 403 ? "AUTH" : "INVALID_REQUEST";
++	return fallback;
++}
+ /**
+ * Map a terminal pi-ai event to the harness finish reason.
+ * @param message - the assistant message carried by the `done` or `error` event.
+@@ -1957,6 +1979,8 @@ var PiAiAdapter = class extends LlmAdapter {
+ 			error: void 0,
+ 			hasError: false
+ 		};
++		let acquiredPermit;
++		let permitReleased = false;
+ 		try {
+ 			if (options.stop !== void 0) throw new LlmError("llm-pi-ai does not support GenerateOptions.stop", "UNSUPPORTED_OPTION");
+ 			const profile = this.profileOf(snapshot, options.provider);
+@@ -1969,10 +1993,53 @@ var PiAiAdapter = class extends LlmAdapter {
+ 			} : options;
+ 			const reasoning = resolveReasoningLevel(model, options.reasoningEffort ?? profile.reasoning);
+ 			const apiKey = await this.config.resolveApiKey(options.provider, profile);
++			const isNvidiaRoute = options.provider === "nvidialocal" && profile.baseURL.startsWith("https://integrate.api.nvidia.com/");
++			const credentialRef = profile.apiKeyEnv ?? "<ambient>";
++			const gate = isNvidiaRoute ? gateFor(options.provider, credentialRef).gate : void 0;
++			const sessionId = options.sessionId === void 0 ? "<no-session>" : String(options.sessionId);
++			const chainKey = isNvidiaRoute ? retryChainKey(options.provider, credentialRef, sessionId) : void 0;
++			const chain = chainKey === void 0 ? void 0 : retryChainFor(chainKey);
++			const elapsed = chain === void 0 ? 0 : Date.now() - chain.startedAt;
++			const remaining = chain === void 0 ? retrySettings.totalBudgetMs : retrySettings.totalBudgetMs - elapsed;
++			if (chain !== void 0 && remaining < retrySettings.minAttemptMs) {
++				clearRetryChain(chainKey);
++				throw new LlmError("LLM retry deadline exhausted", "DEADLINE_EXHAUSTED");
++			}
++			const queueWaitMs = chain === void 0
++				? retrySettings.queueTimeoutMs
++				: Math.min(retrySettings.queueTimeoutMs, Math.max(0, remaining - retrySettings.minAttemptMs));
++			let permit;
++			try {
++				permit = isNvidiaRoute ? await gate.acquire(queueWaitMs, options.signal) : { release: () => {} };
++			} catch (error) {
++				if (error?.code === "QUEUE_FULL" || error?.code === "ABORTED") {
++					throw new LlmError(error.message, error.code, { cause: error });
++				}
++				throw error;
++			}
++			if (permit === null) {
++				if (chainKey !== void 0 && chain !== void 0) clearRetryChain(chainKey);
++				throw new LlmError(chain === void 0 ? "LLM request queue timed out" : "LLM retry deadline exhausted", chain === void 0 ? "QUEUE_TIMEOUT" : "DEADLINE_EXHAUSTED");
++			}
++			acquiredPermit = permit;
++			const attemptRemaining = chain === void 0
++				? retrySettings.attemptTimeoutMs
++				: retrySettings.totalBudgetMs - (Date.now() - chain.startedAt);
++			if (chain !== void 0 && attemptRemaining < retrySettings.minAttemptMs) {
++				permit.release({ code: "DEADLINE_EXHAUSTED" });
++				permitReleased = true;
++				clearRetryChain(chainKey);
++				throw new LlmError("LLM retry deadline exhausted", "DEADLINE_EXHAUSTED");
++			}
++			const attemptTimeoutMs = isNvidiaRoute
++				? Math.min(retrySettings.attemptTimeoutMs, profile.timeoutMs > 0 ? profile.timeoutMs : retrySettings.attemptTimeoutMs, attemptRemaining)
++				: void 0;
++			const attemptTimeoutSignal = isNvidiaRoute ? AbortSignal.timeout(attemptTimeoutMs) : void 0;
+ 			const consumer = new AbortController();
+ 			const upstream = options.signal === void 0 ? consumer.signal : AbortSignal.any([options.signal, consumer.signal]);
+ 			const streamIdleTimeoutMs = profile.streamIdleTimeoutMs;
+ 			const watchdog = __addDisposableResource(env_1, idleWatchdog(upstream, streamIdleTimeoutMs, "LLM_STREAM_IDLE_TIMEOUT"), false);
++			const requestSignal = isNvidiaRoute ? AbortSignal.any([watchdog.signal, attemptTimeoutSignal]) : watchdog.signal;
+ 			try {
+ 				const containsImage = options.messages.some((message) => contentHasImage(message.content));
+ 				if (containsImage && !model.input.includes("image")) throw new LlmError(`pi-ai model "${model.id}" does not support image input`, "UNSUPPORTED_CONTENT");
+@@ -1987,7 +2054,7 @@ var PiAiAdapter = class extends LlmAdapter {
+ 				};
+ 				const context = attachments === void 0 ? toPiContext(request, void 0, onReplayDegrade, updates.systemPromptUpdate === "in-history") : await toPiContext({
+ 					...request,
+-					signal: watchdog.signal
++					signal: requestSignal
+ 				}, {
+ 					attachments,
+ 					resolveImageAccess: (ref) => this.config.resolveImageAccess?.(attachments, ref),
+@@ -1997,30 +2064,103 @@ var PiAiAdapter = class extends LlmAdapter {
+ 						maxBytes: profile.requestImageMaxBytes
+ 					}
+ 				}, onReplayDegrade, updates.systemPromptUpdate === "in-history");
++				let providerRetryAfterMs = null;
++				let providerStatus = null;
++				const fetchWithRetryAfter = isNvidiaRoute ? async (input, init) => {
++					const response = await globalThis.fetch(input, init);
++					providerStatus = response.status;
++					if (!response.ok) providerRetryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
++					return response;
++				} : void 0;
+ 				const iterator = toStreamChunks(snapshot.models.streamSimple(model, context, {
+ 					...profileOptions(profile, reasoning, apiKey),
++					...isNvidiaRoute ? { timeoutMs: attemptTimeoutMs, fetch: fetchWithRetryAfter } : {},
+ 					...options.temperature === void 0 ? {} : { temperature: options.temperature },
+ 					...options.maxTokens === void 0 ? {} : { maxTokens: options.maxTokens },
+ 					...options.sessionId === void 0 ? {} : { sessionId: String(options.sessionId) },
+-					signal: watchdog.signal,
++					signal: requestSignal,
+ 					headers: requestHeaders(profile.headers)
+ 				}), model.contextWindow, options.signal, model.id)[Symbol.asyncIterator]();
+ 				let exhausted = false;
++				let terminalFailure = false;
++				let bytesDelivered = 0;
++				let gateResult = { code: "TRANSPORT" };
+ 				try {
+ 					while (true) {
+ 						const result = await watchdog.next(iterator);
+ 						if (result.done) {
+ 							exhausted = true;
++							if (!terminalFailure) {
++								gateResult = { ok: true };
++								clearRetryChain(chainKey);
++							}
+ 							return;
+ 						}
+-						yield result.value;
++						let chunk = result.value;
++						if (isNvidiaRoute && chunk.type === "text-delta") bytesDelivered += Buffer.byteLength(chunk.text, "utf8");
++						else if (isNvidiaRoute && chunk.type === "reasoning-delta") bytesDelivered += Buffer.byteLength(chunk.text, "utf8");
++						else if (isNvidiaRoute && chunk.type === "tool-call-delta") bytesDelivered += Buffer.byteLength(chunk.argumentsDelta, "utf8");
++						if (chunk.type === "finish" && chunk.reason.kind === "error") {
++							terminalFailure = true;
++							const code = isNvidiaRoute ? classifyProviderStatus(providerStatus, chunk.reason.failure.code) : chunk.reason.failure.code;
++							const failure = {
++								...chunk.reason.failure,
++								...(isNvidiaRoute ? {
++									code,
++									bytesDelivered,
++									...providerStatus === null ? {} : { status: providerStatus },
++									...providerRetryAfterMs === null || providerRetryAfterMs === 0 ? {} : { providerRetryAfterMs }
++								} : {})
++							};
++							if (isNvidiaRoute && code === "RATE_LIMIT") gate.pauseUntil(Date.now() + rateLimitPauseMs(providerRetryAfterMs));
++							const ambiguous = code === "SERVER" || code === "TIMEOUT" || code === "TRANSPORT";
++							if (isNvidiaRoute && bytesDelivered === 0 && (code === "RATE_LIMIT" || ambiguous && retrySettings.retryAmbiguous)) {
++								failure.retryChainStartedAt = startRetryChain(chainKey);
++							} else if (isNvidiaRoute) {
++								clearRetryChain(chainKey);
++							}
++							if (isNvidiaRoute) gateResult = { code };
++							chunk = { ...chunk, reason: { ...chunk.reason, failure } };
++						} else if (chunk.type === "finish") {
++							if (isNvidiaRoute) {
++								gateResult = { ok: true };
++								clearRetryChain(chainKey);
++							}
++						}
++						yield chunk;
++					}
++				} catch (error) {
++					if (!isNvidiaRoute || options.signal?.aborted) throw error;
++					const fallbackCode = error instanceof LlmError ? error.code : classifyPiAiError(error instanceof Error ? error.message : String(error));
++					const code = classifyProviderStatus(providerStatus, fallbackCode);
++					terminalFailure = true;
++					if (code === "RATE_LIMIT") gate.pauseUntil(Date.now() + rateLimitPauseMs(providerRetryAfterMs));
++					const ambiguous = code === "SERVER" || code === "TIMEOUT" || code === "TRANSPORT";
++					const failure = {
++						message: error instanceof Error ? error.message : String(error),
++						code,
++						bytesDelivered,
++						...providerStatus === null ? {} : { status: providerStatus },
++						...providerRetryAfterMs === null || providerRetryAfterMs === 0 ? {} : { providerRetryAfterMs }
++					};
++					if (bytesDelivered === 0 && (code === "RATE_LIMIT" || ambiguous && retrySettings.retryAmbiguous)) {
++						failure.retryChainStartedAt = startRetryChain(chainKey);
++					} else {
++						clearRetryChain(chainKey);
+ 					}
++					gateResult = { code };
++					yield {
++						type: "finish",
++						reason: { kind: "error", failure }
++					};
+ 				} finally {
+ 					if (!exhausted) {
+ 						consumer.abort("pi-ai stream consumer stopped");
+ 						/* v8 ignore next -- the detached drain only rejects while unwinding an abandoned stream. */
+ 						iterator.return(void 0).catch(() => {});
+ 					}
++					permit.release(gateResult);
++					permitReleased = true;
+ 				}
+ 			} catch (error) {
+ 				if (timeoutOf(watchdog.signal, "LLM_STREAM_IDLE_TIMEOUT") !== void 0) throw new LlmError(`pi-ai stream idle timeout after ${streamIdleTimeoutMs}ms`, "TIMEOUT", { cause: error });
+@@ -2030,6 +2170,10 @@ var PiAiAdapter = class extends LlmAdapter {
+ 				consumer.abort("pi-ai stream consumer stopped");
+ 			}
+ 		} catch (e_1) {
++			if (acquiredPermit !== void 0 && !permitReleased) {
++				acquiredPermit.release({ code: e_1 instanceof LlmError ? e_1.code : "TRANSPORT" });
++				permitReleased = true;
++			}
+ 			env_1.error = e_1;
+ 			env_1.hasError = true;
+ 		} finally {
+@@ -2982,4 +3126,4 @@ function apply(ctx, config) {
+ 	});
+ }
+ //#endregion
+-export { Config, PiAiAdapter, apply, inject, name, recordKeyFor, supportedProtocols };
++export { Config, PiAiAdapter, apply, classifyPiAiError, classifyProviderStatus, inject, name, recordKeyFor, supportedProtocols };
