@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest"
 import { createRequire } from "node:module"
 import { dirname, join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { isOpenCodeUrl } from "../../resources/dsh/opencode-session.mjs"
+import { applyOpenCodeSession, isOpenCodeUrl } from "../../resources/dsh/opencode-session.mjs"
 
 async function catalogBaseUrls(provider: string) {
   const require = createRequire(import.meta.url)
@@ -22,6 +22,23 @@ describe("OpenCode session preload", () => {
 
     expect(urls.length).toBeGreaterThan(0)
     for (const url of urls) expect([url, isOpenCodeUrl(`${url}/chat/completions`)]).toEqual([url, true])
+  })
+
+  test("preserves an existing session and ignores blank sources", () => {
+    const existingSession = applyOpenCodeSession("https://opencode.ai/inference/chat/completions", {
+      headers: {
+        "x-client-request-id": "conversation-123",
+        "x-opencode-session": "ses_preexisting",
+      },
+    })
+
+    expect(new Headers(existingSession.headers).get("x-opencode-session")).toBe("ses_preexisting")
+
+    const blankSource = applyOpenCodeSession("https://opencode.ai/inference/chat/completions", {
+      headers: { "x-client-request-id": "   " },
+    })
+
+    expect(new Headers(blankSource.headers).get("x-opencode-session")).toBeNull()
   })
 
   test("leaves other hosts alone", () => {

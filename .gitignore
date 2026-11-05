@@ -36,3 +36,8 @@ tsconfig.tsbuildinfo
 # Python bytecode (bundled skills under skills/ ship .py sources)
 __pycache__/
 *.pyc
+
+# Working dirs / backups
+.tmp/
+patch-work/
+*.bak-*

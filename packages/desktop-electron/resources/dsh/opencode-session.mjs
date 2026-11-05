@@ -34,9 +34,16 @@ export function isOpenCodeUrl(input) {
 
 export function applyOpenCodeSession(input, init) {
   const headers = new Headers(init?.headers ?? (input && typeof input === 'object' ? input.headers : undefined));
+
+  const existingSession = headers.get(OPENCODE_SESSION_HEADER);
+  if (existingSession) return { ...(init || {}), headers };
+
   const source = headers.get(OPENCODE_SESSION_SOURCE_HEADER);
+  const normalizedSource = source?.trim();
   // A request carrying no conversation — the model list — sends none.
-  if (source) headers.set(OPENCODE_SESSION_HEADER, openCodeSessionId(source));
+  if (!normalizedSource) return { ...(init || {}), headers };
+
+  headers.set(OPENCODE_SESSION_HEADER, openCodeSessionId(normalizedSource));
   return { ...(init || {}), headers };
 }
 
